@@ -28,7 +28,7 @@ func TestLinkGathering(t *testing.T) {
 
 	for i, link := range links {
 		expected := fmt.Sprintf("http://testlink-%d", i+1)
-		actual, ok := link.getAttr("href")
+		actual, ok := link.GetAttr("href")
 		if !ok {
 			t.Fatalf("Returned tag has no href attribute")
 		}
