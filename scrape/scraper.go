@@ -21,11 +21,6 @@ func Create(bytes []byte) (*Tag, error) {
 	return scraper, nil
 }
 
-// createTokenizer creates a tokenizer for parsing the HTML
-func createTokenizer(bytes []byte) *html.Tokenizer {
-	return html.NewTokenizer(strings.NewReader(string(bytes)))
-}
-
 // FindFirst will return the first matching Tag
 func (s *Tag) FindFirst(tag string, params map[string]string) *Tag {
 	tags := findTags(s.bytes, tag, params, 1)
@@ -77,6 +72,22 @@ func findTags(bytes []byte, tag string, params map[string]string, count int) []*
 	return tags
 }
 
+// Text will retrieve all text from inside a tag
+func (t *Tag) Text() string {
+	text := ""
+	tokenizer := html.NewTokenizer(strings.NewReader(string(t.bytes)))
+
+	for {
+		tagType := tokenizer.Next()
+		if tagType == html.TextToken {
+			text += tokenizer.Token().Data
+		} else if tagType == html.ErrorToken {
+			break
+		}
+	}
+	return text
+}
+
 // tagContents returns the HTML contained within the current Tag
 func tagContents(token html.Token, tokenizer *html.Tokenizer) []byte {
 	// Start at a given tag and work your way down until the depth gets back to 0.
@@ -114,7 +125,7 @@ var looseMatchParams = map[string]bool{"class": true}
 
 func (t *Tag) paramMatch(params map[string]string) bool {
 	for key, value := range params {
-		val, ok := t.getAttr(key)
+		val, ok := t.GetAttr(key)
 
 		// Check for loose matches, such as when an attr can have multiple values.
 		if _, useLooseMatch := looseMatchParams[key]; useLooseMatch {
@@ -144,20 +155,14 @@ func looseMatch(expected, actual string) bool {
 	return false
 }
 
-// getAttr will return the value of a specific attribute for the current Tag
-func (t *Tag) getAttr(attr string) (string, bool) {
+// GetAttr will return the value of a specific attribute for the current Tag
+func (t *Tag) GetAttr(attr string) (string, bool) {
 	for _, attribute := range t.token.Attr {
 		if attribute.Key == attr {
 			return attribute.Val, true
 		}
 	}
 	return "", false
-}
-
-// getInnerText returns all text contained within the given tag
-func (t *Tag) getInnerText() string {
-
-	return ""
 }
 
 // String returns a string representation of a Tag
