@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"tracker/scrape"
@@ -39,6 +40,9 @@ func (s *Show) scrape(url string) error {
 		}
 	}
 
+	if s.EpisodeURL == "" {
+		s.EpisodeURL = url
+	}
 	if err := s.scrapeEpisodes(s.EpisodeURL); err != nil {
 		return err
 	}
@@ -47,8 +51,74 @@ func (s *Show) scrape(url string) error {
 	return nil
 }
 
-// TODO: Make this actually fucking work...
 func (s *Show) scrapeEpisodes(url string) error {
+	body, err := GetBytes(url)
+	if err != nil {
+		return err
+	}
+
+	scraper, err := scrape.Create(body)
+	if err != nil {
+		return fmt.Errorf("Unable to create scraper; %v - %v\n", err, scraper)
+	}
+
+	tables := scraper.FindAll("table", attr{"class": "wikiepisodetable"})
+	for _, table := range tables {
+		if !table.Valid {
+			continue
+		}
+
+		rows := table.FindAll("tr", nil)
+		for _, row := range rows {
+			if !row.Valid {
+				continue
+			}
+
+			columns := row.FindAll("td", nil)
+			if len(columns) < 2 {
+				continue
+			}
+
+			episode_num_str := parseString(columns[0].Text())
+			episode_num, err := stringToInt(episode_num_str)
+			if err != nil {
+				fmt.Errorf("Unable to convert %s to an integer: %v", episode_num_str, err)
+			}
+
+			episode := &Episode{
+				Season:  0,
+				Episode: episode_num,
+			}
+
+			for _, column := range columns {
+				if !column.Valid {
+					continue
+				}
+
+				// Get title
+				class, ok := column.GetAttr("class")
+				if ok && strings.Contains(class, "summary") {
+					episode.Title = parseString(column.Text())
+					continue
+				}
+
+				// Get release date
+				text := parseString(column.Text())
+				if isDate(text) {
+					episode.ReleaseDate = text
+					continue
+				}
+
+			}
+
+			s.Episodes = append(s.Episodes, episode)
+		}
+	}
+	return nil
+}
+
+// TODO: Make this actually fucking work...
+func (s *Show) noscrapeEpisodes(url string) error {
 	// Scrape info from the Episode List page.
 	body, err := GetBytes(url)
 	if err != nil {
@@ -79,7 +149,7 @@ func (s *Show) scrapeEpisodes(url string) error {
 			}
 
 			episode := &Episode{
-				Season: "00",
+				Season: 0,
 				//Episode: parseString(columns[0].Text()),
 			}
 
@@ -120,7 +190,14 @@ func parseString(str string) string {
 	str = strings.Trim(str, "\r")
 	str = strings.Trim(str, "\t")
 	str = strings.Trim(str, " ")
+	str = strings.Replace(str, "  ", " ", 100)
+	str = strings.Replace(str, "\t\t", "\t", 100)
+	str = strings.Replace(str, "\n", "", 100)
 	return str
+}
+
+func stringToInt(str string) (int, error) {
+	return strconv.Atoi(str)
 }
 
 var months = []string{
