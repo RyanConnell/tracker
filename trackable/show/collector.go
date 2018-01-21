@@ -2,12 +2,10 @@ package show
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strconv"
 	"strings"
 
 	"tracker/scrape"
+	"tracker/trackable/common"
 )
 
 type attr = map[string]string
@@ -22,7 +20,7 @@ func Collect() error {
 }
 
 func (s *Show) scrape(url string) error {
-	body, err := GetBytes(url)
+	body, err := common.GetBytes(url)
 	if err != nil {
 		return err
 	}
@@ -52,7 +50,7 @@ func (s *Show) scrape(url string) error {
 }
 
 func (s *Show) scrapeEpisodes(url string) error {
-	body, err := GetBytes(url)
+	body, err := common.GetBytes(url)
 	if err != nil {
 		return err
 	}
@@ -62,156 +60,22 @@ func (s *Show) scrapeEpisodes(url string) error {
 		return fmt.Errorf("Unable to create scraper; %v - %v\n", err, scraper)
 	}
 
+	seasonNum := 1
+	var previousDate *common.Date = &common.Date{}
 	tables := scraper.FindAll("table", attr{"class": "wikiepisodetable"})
 	for _, table := range tables {
 		if !table.Valid {
 			continue
 		}
 
-		rows := table.FindAll("tr", nil)
-		for _, row := range rows {
-			if !row.Valid {
-				continue
-			}
-
-			columns := row.FindAll("td", nil)
-			if len(columns) < 2 {
-				continue
-			}
-
-			episode_num_str := parseString(columns[0].Text())
-			episode_num, err := stringToInt(episode_num_str)
-			if err != nil {
-				fmt.Errorf("Unable to convert %s to an integer: %v", episode_num_str, err)
-			}
-
-			episode := &Episode{
-				Season:  0,
-				Episode: episode_num,
-			}
-
-			for _, column := range columns {
-				if !column.Valid {
-					continue
-				}
-
-				// Get title
-				class, ok := column.GetAttr("class")
-				if ok && strings.Contains(class, "summary") {
-					episode.Title = parseString(column.Text())
-					continue
-				}
-
-				// Get release date
-				text := parseString(column.Text())
-				if isDate(text) {
-					episode.ReleaseDate = text
-					continue
-				}
-
-			}
-
-			s.Episodes = append(s.Episodes, episode)
+		err := s.parseEpisodeTable(table, seasonNum, previousDate)
+		seasonNum++
+		if err != nil {
+			return err
 		}
+
 	}
 	return nil
-}
-
-// TODO: Make this actually fucking work...
-func (s *Show) noscrapeEpisodes(url string) error {
-	// Scrape info from the Episode List page.
-	body, err := GetBytes(url)
-	if err != nil {
-		return err
-	}
-
-	scraper, err := scrape.Create(body)
-	if err != nil {
-		return fmt.Errorf("Unable to create scraper; %v - %v\n", err, scraper)
-	}
-
-	// Scrape info from each episode table
-	tables := scraper.FindAll("table", attr{"class": "wikiepisodetable"})
-	for _, table := range tables {
-		if !table.Valid {
-			continue
-		}
-
-		rows := table.FindAll("tr", nil)
-		for _, row := range rows {
-			if !row.Valid {
-				continue
-			}
-
-			columns := table.FindAll("td", nil)
-			if len(columns) < 2 {
-				continue
-			}
-
-			episode := &Episode{
-				Season: 0,
-				//Episode: parseString(columns[0].Text()),
-			}
-
-			for _, column := range columns {
-				if !column.Valid {
-					continue
-				}
-
-				// Get Title
-				class, ok := column.GetAttr("class")
-				if ok && strings.Contains(class, "summary") {
-					episode.Title = parseString(column.Text())
-					if episode.Title[0] == '"' {
-						episode.Title = parseString(episode.Title[1 : len(episode.Title)-1])
-					}
-					continue
-				}
-
-				// Get Release Date by checking for a month or datestamp
-				text := parseString(column.Text())
-				if isDate(text) {
-					//episode.ReleaseDate = text
-				}
-
-			}
-
-			s.Episodes = append(s.Episodes, episode)
-
-		}
-
-	}
-
-	return nil
-}
-
-func parseString(str string) string {
-	str = strings.Trim(str, "\n")
-	str = strings.Trim(str, "\r")
-	str = strings.Trim(str, "\t")
-	str = strings.Trim(str, " ")
-	str = strings.Replace(str, "  ", " ", 100)
-	str = strings.Replace(str, "\t\t", "\t", 100)
-	str = strings.Replace(str, "\n", "", 100)
-	return str
-}
-
-func stringToInt(str string) (int, error) {
-	return strconv.Atoi(str)
-}
-
-var months = []string{
-	"january", "february", "march", "april", "may", "june", "july",
-	"august", "september", "october", "november", "december",
-}
-
-func isDate(text string) bool {
-	for _, month := range months {
-		if strings.Contains(strings.ToLower(text), month) {
-			return true
-		}
-	}
-	return false
 }
 
 func (s *Show) parseInfobox(infobox *scrape.Tag) error {
@@ -240,21 +104,61 @@ func (s *Show) parseInfobox(infobox *scrape.Tag) error {
 	return nil
 }
 
-func (s *Show) parseEpisodeTable(table *scrape.Tag) error {
+func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *common.Date) error {
+	rows := table.FindAll("tr", nil)
+	for _, row := range rows {
+		if !row.Valid {
+			continue
+		}
+
+		columns := row.FindAll("td", nil)
+		if len(columns) < 2 {
+			continue
+		}
+
+		episodeNumStr := common.ParseString(columns[0].Text())
+		episodeNum, err := common.StringToInt(episodeNumStr)
+		if err != nil {
+			fmt.Errorf("Unable to convert %s to an integer: %v", episodeNumStr, err)
+		}
+
+		episode := &Episode{
+			Season:  season,
+			Episode: episodeNum,
+		}
+
+		for _, column := range columns {
+			if !column.Valid {
+				continue
+			}
+
+			// Get title
+			class, ok := column.GetAttr("class")
+			if ok && strings.Contains(class, "summary") {
+				episode.Title = common.ParseString(column.Text())
+				continue
+			}
+
+			// Get release date
+			text := common.ParseString(column.Text())
+			if common.IsDate(text) {
+				episode.ReleaseDate, err = common.ToDate(text)
+				if err != nil {
+					fmt.Printf("Unable to convert %s to a date object: %v\n", text, err)
+				}
+				continue
+			}
+
+		}
+
+		// If new date is less than previous date we can skip this episode.
+		// (Indicative of Webisodes)
+		if episode.ReleaseDate.CompareTo(previousDate) == -1 {
+			continue
+		}
+
+		previousDate = episode.ReleaseDate
+		s.Episodes = append(s.Episodes, episode)
+	}
 	return nil
-}
-
-func GetBytes(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert reader to bytes
-	bytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
 }

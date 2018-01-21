@@ -3,6 +3,9 @@ package show
 import (
 	"database/sql"
 	"fmt"
+
+	"tracker/trackable/common"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -28,7 +31,7 @@ type Episode struct {
 	Title       string
 	Season      int
 	Episode     int
-	ReleaseDate string
+	ReleaseDate *common.Date
 }
 
 func (s *Show) Write() error {
@@ -39,13 +42,18 @@ func (s *Show) Write() error {
 
 	for _, e := range s.Episodes {
 		_, err = db.Exec(`INSERT INTO episodes(show_id, season, episode, title, release_date)
-		 		          VALUES(?, ?, ?, ?, ?)`, s.ID, e.Season, e.Episode, e.Title, e.ReleaseDate)
+		 		          VALUES(?, ?, ?, ?, ?)`, s.ID, e.Season, e.Episode, e.Title,
+			e.ReleaseDate.ToTime())
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (s *Show) GetEpisodes() ([]*Episode, error) {
+	return nil, nil
 }
 
 func (s *Show) String() string {
@@ -60,7 +68,7 @@ func (s *Show) String() string {
 }
 
 func (s *Episode) String() string {
-	return fmt.Sprintf("%10s x %-50s: %-50s - '%-50s'", s.Season, s.Episode,
+	return fmt.Sprintf("%3d x %-3d: %s - '%-50s'", s.Season, s.Episode,
 		s.ReleaseDate, s.Title)
 }
 
