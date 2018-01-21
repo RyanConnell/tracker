@@ -19,10 +19,10 @@ var frontend *Frontend
 
 func (_ *Frontend) RegisterHandlers(subdomain string) {
 	rtr := mux.NewRouter()
-	rtr.HandleFunc("/show/", indexRequest)
-	rtr.HandleFunc("/show/{id:[0-9]+}", detailRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/", subdomain), indexRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/{id:[0-9]+}", subdomain), detailRequest)
 
-	http.Handle("/", rtr)
+	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
 func (f *Frontend) Init() error {

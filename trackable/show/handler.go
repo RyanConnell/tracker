@@ -15,7 +15,7 @@ func (h *Handler) Init() {
 }
 
 func (h *Handler) Get(id int) (*Show, error) {
-	return h.shows[id], nil
+	return h.shows[id-1], nil
 }
 
 type ShowSimple struct {
