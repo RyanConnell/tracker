@@ -18,7 +18,34 @@ func (h *Handler) Get(id int) (*Show, error) {
 	return h.shows[id], nil
 }
 
-func (h *Handler) GetList(count, page int) ([]*Show, error) {
-	offset := count * page
-	return h.shows[offset : offset+count], nil
+type ShowSimple struct {
+	ID    int
+	Name  string
+	Image string
+}
+
+type ShowList struct {
+	Count int
+	Shows []*ShowSimple
+}
+
+func (h *Handler) GetList() ShowList {
+	shows := h.shows
+	showsSimple := make([]*ShowSimple, len(shows))
+	for i, show := range shows {
+		showsSimple[i] = showToSimple(show)
+	}
+	return ShowList{
+		Count: len(showsSimple),
+		Shows: showsSimple,
+	}
+}
+
+func showToSimple(show *Show) *ShowSimple {
+	s := ShowSimple{
+		ID:    show.ID,
+		Name:  show.Name,
+		Image: show.Image,
+	}
+	return &s
 }

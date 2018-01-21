@@ -31,7 +31,7 @@ func (a *API) Init() error {
 }
 
 func defaultRequest(w http.ResponseWriter, r *http.Request) {
-	p := page.Page{[]byte("<h1>Shows</h1>")}
+	p := page.Page{[]byte("Show API landing page - Perhaps serve a README here?")}
 	p.ServePage(w)
 }
 
@@ -49,12 +49,12 @@ func getRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func listRequest(w http.ResponseWriter, r *http.Request) {
-	list, err := api.handler.GetList(5, 0)
+	list := api.handler.GetList()
+	body, err := json.Marshal(list)
 	if err != nil {
 		serveError(err, w, r)
 		return
 	}
-	body, err := json.Marshal(list)
 	p := page.Page{body}
 	p.ServePage(w)
 }
