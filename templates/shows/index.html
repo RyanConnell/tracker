@@ -1,0 +1,34 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="/public/css/material.css" />
+	<title>Show Tracker - List</title>
+</head>
+
+<body>
+	{{ template "navbar" }}
+
+	<div>
+		<div class="show_container">
+			
+		{{ range .Shows }}
+			<div align="center" class="image">
+				<a href="{{ .ID }}">
+					<div class="show_title">
+						<p class="show_title">{{ .Name }}</p>
+					</div>
+					<img class="cover"
+						 src="http://cdn.rhinodude.com/Shows/images/cover/{{.Name}}.jpg"></img>
+				</a>
+				<div class="details">
+					<p class="details-title">{{ .Name }}</p>
+				</div>
+			</div>
+		{{ end }}
+
+		</div>
+	</div>
+</body>
+</html>		
+
+
+</html>
