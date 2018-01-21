@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"tracker/server/page"
+
+	"github.com/gorilla/mux"
 )
 
 // API implemnts server.API
@@ -17,9 +20,12 @@ type API struct {
 var api *API
 
 func (_ *API) RegisterHandlers(subdomain string) {
-	http.HandleFunc(fmt.Sprintf("/%s/", subdomain), defaultRequest)
-	http.HandleFunc(fmt.Sprintf("/%s/get/", subdomain), getRequest)
-	http.HandleFunc(fmt.Sprintf("/%s/get/list", subdomain), listRequest)
+	rtr := mux.NewRouter()
+	rtr.HandleFunc(fmt.Sprintf("/%s/", subdomain), defaultRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/get/{id:[0-9]+}", subdomain), getRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/get/list", subdomain), listRequest)
+
+	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
 func (a *API) Init() error {
@@ -36,7 +42,14 @@ func defaultRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRequest(w http.ResponseWriter, r *http.Request) {
-	show, err := api.handler.Get(1)
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		serveError(err, w, r)
+		return
+	}
+
+	show, err := api.handler.Get(id)
 	if err != nil {
 		serveError(err, w, r)
 		return
