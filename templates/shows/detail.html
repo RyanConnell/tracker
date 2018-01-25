@@ -15,8 +15,15 @@
 
 				<div class="show_info">
 					<p class="spacing"></p>
-					<p class="show_info">? Episodes</p>
-					<p class="show_info">? Seasons</p>
+					<p class="show_info">{{ .SeasonCount }} Seasons</p>
+					<p class="show_info">{{ .EpisodeCount }} Episodes</p>
+				</div>
+				<div class="air_info">
+					{{ if .NextEpisode }}
+						<p class="air_info">Next Episode: {{ .NextEpisode.ReleaseDate.FancyString }}</p>
+					{{ else }}
+						<p class="air_info">Next Release Date Unknown</p>
+					{{ end }}
 				</div>
 			</div>
 

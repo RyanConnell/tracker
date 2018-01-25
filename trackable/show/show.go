@@ -3,6 +3,7 @@ package show
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"tracker/trackable/common"
 
@@ -56,6 +57,39 @@ func (s *Show) GetEpisodes() ([]*Episode, error) {
 	return nil, nil
 }
 
+func (s *Show) GetMostRecentEpisode() *Episode {
+	now := time.Now()
+	currentDate := &common.Date{now.Day(), int(now.Month()), now.Year()}
+	var lastEpisode *Episode = nil
+	for _, episode := range s.Episodes {
+		if episode.ReleaseDate.CompareTo(currentDate) == 1 {
+			return lastEpisode
+		}
+		lastEpisode = episode
+	}
+	return lastEpisode
+}
+
+func (s *Show) GetNextEpisode() *Episode {
+	now := time.Now()
+	currentDate := &common.Date{now.Day(), int(now.Month()), now.Year()}
+	for _, episode := range s.Episodes {
+		if episode.ReleaseDate.CompareTo(currentDate) == 1 {
+			return episode
+		}
+	}
+	return nil
+}
+
+func (s *Show) EpisodesBefore(episode *Episode) int {
+	for i, e := range s.Episodes {
+		if e.Season == episode.Season && e.Episode == episode.Episode {
+			return i
+		}
+	}
+	return 0
+}
+
 func (s *Show) String() string {
 	episodeString := ""
 	for _, episode := range s.Episodes {
@@ -106,6 +140,20 @@ func (s *Show) Scan(rows *sql.Rows) error {
 		&s.Finished)
 }
 
+func (e *Episode) Scan(rows *sql.Rows) error {
+	var date common.NullDate
+	err := rows.Scan(&e.Title, &e.Season, &e.Episode, &date)
+	if err != nil {
+		return fmt.Errorf("Unable to scan episode: %v", err)
+	}
+	if date.Valid {
+		e.ReleaseDate = &date.Date
+	} else {
+		fmt.Printf("Invalid ReleaseDate")
+	}
+	return nil
+}
+
 func loadAllShows() ([]*Show, error) {
 	shows := make([]*Show, 0)
 
@@ -125,10 +173,41 @@ func loadAllShows() ([]*Show, error) {
 		if err != nil {
 			return shows, err
 		}
+
+		err = show.loadAllEpisodes()
+		if err != nil {
+			return shows, err
+		}
 		shows = append(shows, show)
 	}
 
 	return shows, nil
+}
+
+func (s *Show) loadAllEpisodes() error {
+	s.Episodes = make([]*Episode, 0)
+
+	db, err := openDB("tracker")
+	if err != nil {
+		return err
+	}
+
+	rows, err := db.Query("SELECT title,season,episode,release_date FROM episodes WHERE show_id=?",
+		s.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		episode := &Episode{}
+		err := episode.Scan(rows)
+		if err != nil {
+			return err
+		}
+		s.Episodes = append(s.Episodes, episode)
+	}
+	return nil
 }
 
 func openDB(name string) (*sql.DB, error) {
