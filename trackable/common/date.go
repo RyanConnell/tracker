@@ -1,6 +1,7 @@
 package common
 
 import (
+	"database/sql/driver"
 	"fmt"
 	"regexp"
 	"strings"
@@ -11,6 +12,11 @@ type Date struct {
 	Day   int
 	Month int
 	Year  int
+}
+
+type NullDate struct {
+	Date  Date
+	Valid bool
 }
 
 var months = []string{
@@ -59,6 +65,41 @@ func (d *Date) CompareTo(date *Date) int {
 		return 1
 	}
 	return -1
+}
+
+func (nd *NullDate) Scan(value interface{}) error {
+	if val, ok := value.([]uint8); ok {
+		err := nd.fromStr(string(val))
+		if err != nil {
+			return err
+		}
+		nd.Valid = true
+	} else {
+		return fmt.Errorf("Unsupported type given for NullDate: %T", value)
+	}
+	return nil
+}
+
+func (nd NullDate) Value() (driver.Value, error) {
+	if !nd.Valid {
+		return nil, nil
+	}
+	return fmt.Sprintf("%04d-%02d-%02d", nd.Date.Year, nd.Date.Month, nd.Date.Day), nil
+}
+
+func (nd *NullDate) fromStr(str string) error {
+	values := strings.Split(str, "-")
+	var err error
+	if nd.Date.Year, err = StringToInt(values[0]); err != nil {
+		return err
+	}
+	if nd.Date.Month, err = StringToInt(values[1]); err != nil {
+		return err
+	}
+	if nd.Date.Day, err = StringToInt(values[2]); err != nil {
+		return err
+	}
+	return nil
 }
 
 func IsDate(str string) bool {
