@@ -71,7 +71,7 @@ func detailRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decode := json.NewDecoder(resp.Body)
-	var jsonRep Show
+	var jsonRep ShowFull
 	decode.Decode(&jsonRep)
 
 	tmpl.Execute(w, jsonRep)

@@ -24,12 +24,22 @@ var months = []string{
 	"august", "september", "october", "november", "december",
 }
 
+var dateSuffixes = []string{
+	"th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th",
+}
+
 func (d *Date) String() string {
 	return fmt.Sprintf("%02d-%02d-%4d", d.Day, d.Month, d.Year)
 }
 
 func (d *Date) FancyString() string {
-	return fmt.Sprintf("%s %d, %4d", months[d.Month], d.Day, d.Year)
+	var suffix string
+	if d.Day >= 10 && d.Day <= 20 {
+		suffix = "th"
+	} else {
+		suffix = dateSuffixes[d.Day%10]
+	}
+	return fmt.Sprintf("%s %d%s, %4d", strings.Title(months[d.Month-1]), d.Day, suffix, d.Year)
 }
 
 func (d *Date) isEmpty() bool {

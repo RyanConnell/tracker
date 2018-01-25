@@ -17,7 +17,7 @@ CREATE TABLE `tracker`.`episodes` (
 	season INTEGER NOT NULL,
 	episode INTEGER NOT NULL,
 	title VARCHAR(255),
-	release_date VARCHAR(255),
+	release_date DATE,
 	PRIMARY KEY(id),
 	UNIQUE KEY(show_id, season, episode)
 );
