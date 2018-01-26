@@ -28,18 +28,33 @@ var dateSuffixes = []string{
 	"th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th",
 }
 
+var daysPerMonth = []int{
+	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+}
+
+var weekdays = []string{
+	"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+}
+
 func (d *Date) String() string {
-	return fmt.Sprintf("%02d-%02d-%4d", d.Day, d.Month, d.Year)
+	return fmt.Sprintf("%04d-%02d-%02d", d.Year, d.Month, d.Day)
 }
 
 func (d *Date) FancyString() string {
-	var suffix string
+	return fmt.Sprintf("%s %d%s, %4d", strings.Title(months[d.Month-1]),
+		d.Day, d.DaySuffix(), d.Year)
+}
+
+func (d *Date) DaySuffix() string {
 	if d.Day >= 10 && d.Day <= 20 {
-		suffix = "th"
-	} else {
-		suffix = dateSuffixes[d.Day%10]
+		return "th"
 	}
-	return fmt.Sprintf("%s %d%s, %4d", strings.Title(months[d.Month-1]), d.Day, suffix, d.Year)
+	return dateSuffixes[d.Day%10]
+}
+
+func (d *Date) CalendarString() string {
+	return fmt.Sprintf("%s. %s. %d%s", strings.Title(d.WeekdayString())[:3],
+		strings.Title(months[d.Month-1])[:3], d.Day, d.DaySuffix())
 }
 
 func (d *Date) isEmpty() bool {
@@ -77,9 +92,62 @@ func (d *Date) CompareTo(date *Date) int {
 	return -1
 }
 
+func (d *Date) Weekday() int {
+	return int(d.ToTime().Weekday())
+}
+
+func (d *Date) WeekdayString() string {
+	return weekdays[d.Weekday()]
+}
+
+// Returns the Date that takes place {i} days before {d}.
+func (d *Date) Minus(i int) *Date {
+	date := &Date{d.Day, d.Month, d.Year}
+	date.Day -= i
+
+	for date.Day <= 0 {
+		date.Month -= 1
+		if date.Month == 0 {
+			date.Month = 12
+			date.Year -= 1
+		}
+		date.Day += DaysPerMonth(date.Month, date.Year)
+	}
+
+	return date
+}
+
+// Returns the Date that takes place {i} days after {d}.
+func (d *Date) Plus(i int) *Date {
+	date := &Date{d.Day, d.Month, d.Year}
+	date.Day += i
+
+	for date.Day > DaysPerMonth(date.Month, date.Year) {
+		date.Day -= DaysPerMonth(date.Month, date.Year)
+		date.Month += 1
+		if date.Month == 13 {
+			date.Month = 1
+			date.Year++
+		}
+	}
+
+	return date
+}
+
+func DateFromStr(str string) (Date, error) {
+	date := &NullDate{}
+	if err := date.FromStr(str); err != nil {
+		return Date{}, err
+	}
+	if !date.Valid {
+		return Date{}, fmt.Errorf("Invalid Date: %s", str)
+	}
+	return date.Date, nil
+}
+
 func (nd *NullDate) Scan(value interface{}) error {
 	if val, ok := value.([]uint8); ok {
-		err := nd.fromStr(string(val))
+		err := nd.FromStr(string(val))
 		if err != nil {
 			return err
 		}
@@ -97,7 +165,7 @@ func (nd NullDate) Value() (driver.Value, error) {
 	return fmt.Sprintf("%04d-%02d-%02d", nd.Date.Year, nd.Date.Month, nd.Date.Day), nil
 }
 
-func (nd *NullDate) fromStr(str string) error {
+func (nd *NullDate) FromStr(str string) error {
 	values := strings.Split(str, "-")
 	var err error
 	if nd.Date.Year, err = StringToInt(values[0]); err != nil {
@@ -109,7 +177,19 @@ func (nd *NullDate) fromStr(str string) error {
 	if nd.Date.Day, err = StringToInt(values[2]); err != nil {
 		return err
 	}
+	nd.Valid = nd.isValid()
 	return nil
+}
+
+func (nd *NullDate) isValid() bool {
+	// Add a rule for years here too?
+	if nd.Date.Month <= 0 || nd.Date.Month > 12 {
+		return false
+	}
+	if nd.Date.Day <= 0 || nd.Date.Day > DaysPerMonth(nd.Date.Month, nd.Date.Year) {
+		return false
+	}
+	return true
 }
 
 func IsDate(str string) bool {
@@ -148,4 +228,59 @@ func matchMonth(str string) int {
 		}
 	}
 	return 0
+}
+
+func DatesInRange(start, end Date) ([]*Date, error) {
+	if start.CompareTo(&end) == 1 {
+		return nil, fmt.Errorf("Starting Date takes place before End Date.")
+	}
+
+	years := end.Year - start.Year + 1
+	months := (12 * years) - start.Month - (12 - end.Month) + 1
+
+	dateRange := make([]*Date, 0)
+
+	// Need to handle case where first month = final month
+	if start.Year == end.Year && start.Month == end.Month {
+		for i := start.Day; i <= end.Day; i++ {
+			dateRange = append(dateRange, &Date{i, start.Month, start.Year})
+		}
+		return dateRange, nil
+	}
+
+	// Add first month
+	for i := start.Day; i <= DaysPerMonth(start.Month, start.Year); i++ {
+		dateRange = append(dateRange, &Date{i, start.Month, start.Year})
+	}
+
+	// Add intermediate months
+	for i := 1; i < months-1; i++ {
+		month := start.Month + (i % 12)
+		year := start.Year + (start.Month+i-1)/12
+
+		for i := 1; i <= DaysPerMonth(month, year); i++ {
+			dateRange = append(dateRange, &Date{i, month, year})
+		}
+	}
+
+	// Add final month.
+	for i := 1; i <= end.Day; i++ {
+		dateRange = append(dateRange, &Date{i, end.Month, end.Year})
+	}
+
+	return dateRange, nil
+}
+
+func DaysPerMonth(month, year int) int {
+	if month == 2 {
+		if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+			return 31
+		}
+	}
+	return daysPerMonth[month-1]
+}
+
+func CurrentDate() *Date {
+	t := time.Now()
+	return &Date{t.Day(), int(t.Month()), t.Year()}
 }

@@ -2,6 +2,8 @@ package show
 
 import (
 	"fmt"
+
+	"tracker/trackable/common"
 )
 
 // Handler will take care of database loading and API prepping for Shows.
@@ -19,6 +21,17 @@ func (h *Handler) Init() {
 	}
 }
 
+type ShowSimple struct {
+	ID    int
+	Name  string
+	Image string
+}
+
+type ShowList struct {
+	Count int
+	Shows []*ShowSimple
+}
+
 type ShowFull struct {
 	*Show
 
@@ -28,6 +41,17 @@ type ShowFull struct {
 	// Episode info
 	MostRecentEpisode *Episode `json:"most_recent_episode"`
 	NextEpisode       *Episode `json:"next_episode"`
+}
+
+type Schedule struct {
+	StartDate common.Date    `json:"start_date"`
+	EndDate   common.Date    `json:"end_date"`
+	Items     []ScheduleItem `json:"items"`
+}
+
+type ScheduleItem struct {
+	Date     *common.Date     `json:"date"`
+	Episodes []*CalendarEntry `json:"episodes"`
 }
 
 func (h *Handler) Get(id int) (*ShowFull, error) {
@@ -41,17 +65,6 @@ func (h *Handler) Get(id int) (*ShowFull, error) {
 	return sf, nil
 }
 
-type ShowSimple struct {
-	ID    int
-	Name  string
-	Image string
-}
-
-type ShowList struct {
-	Count int
-	Shows []*ShowSimple
-}
-
 func (h *Handler) GetList() ShowList {
 	shows := h.shows
 	showsSimple := make([]*ShowSimple, len(shows))
@@ -62,6 +75,57 @@ func (h *Handler) GetList() ShowList {
 		Count: len(showsSimple),
 		Shows: showsSimple,
 	}
+}
+
+func (h *Handler) GetSchedule(start, end string) (*Schedule, error) {
+	startDate, err := common.DateFromStr(start)
+	if err != nil {
+		return nil, err
+	}
+
+	endDate, err := common.DateFromStr(end)
+	if err != nil {
+		return nil, err
+	}
+
+	schedule := &Schedule{}
+	schedule.StartDate = startDate
+	schedule.EndDate = endDate
+	dateRange, err := common.DatesInRange(startDate, endDate)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create Date range: %v", err)
+	}
+
+	days := make([]ScheduleItem, len(dateRange))
+	for i, date := range dateRange {
+		item := ScheduleItem{
+			Date:     date,
+			Episodes: h.episodesOnDate(date),
+		}
+		days[i] = item
+	}
+
+	schedule.Items = days
+	return schedule, nil
+}
+
+type CalendarEntry struct {
+	ShowID   int
+	ShowName string
+
+	*Episode
+}
+
+func (h *Handler) episodesOnDate(date *common.Date) []*CalendarEntry {
+	episodes := make([]*CalendarEntry, 0)
+	for _, show := range h.shows {
+		eps := show.EpisodesOnDate(date)
+		for _, e := range eps {
+			episodes = append(episodes, &CalendarEntry{show.ID, show.Name, e})
+		}
+	}
+
+	return episodes
 }
 
 func showToSimple(show *Show) *ShowSimple {
