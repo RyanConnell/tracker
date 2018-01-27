@@ -97,10 +97,11 @@ func (h *Handler) GetSchedule(start, end string) (*Schedule, error) {
 	}
 
 	days := make([]ScheduleItem, len(dateRange))
+	episodeMap := h.episodesInRange(dateRange)
 	for i, date := range dateRange {
 		item := ScheduleItem{
 			Date:     date,
-			Episodes: h.episodesOnDate(date),
+			Episodes: episodeMap[*date],
 		}
 		days[i] = item
 	}
@@ -116,16 +117,22 @@ type CalendarEntry struct {
 	*Episode
 }
 
-func (h *Handler) episodesOnDate(date *common.Date) []*CalendarEntry {
-	episodes := make([]*CalendarEntry, 0)
+func (h *Handler) episodesInRange(dateRange []*common.Date) map[common.Date][]*CalendarEntry {
+	episodeMap := map[common.Date][]*CalendarEntry{}
+	if len(dateRange) == 0 {
+		return episodeMap
+	}
+	for _, date := range dateRange {
+		episodeMap[*date] = make([]*CalendarEntry, 0)
+	}
 	for _, show := range h.shows {
-		eps := show.EpisodesOnDate(date)
+		eps := show.EpisodesInRange(dateRange[0], dateRange[len(dateRange)-1])
 		for _, e := range eps {
-			episodes = append(episodes, &CalendarEntry{show.ID, show.Name, e})
+			entry := &CalendarEntry{show.ID, show.Name, e}
+			episodeMap[*e.ReleaseDate] = append(episodeMap[*e.ReleaseDate], entry)
 		}
 	}
-
-	return episodes
+	return episodeMap
 }
 
 func showToSimple(show *Show) *ShowSimple {

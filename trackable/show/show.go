@@ -91,14 +91,14 @@ func (s *Show) EpisodesBefore(episode *Episode) int {
 	return 0
 }
 
-func (s *Show) EpisodesOnDate(date *common.Date) []*Episode {
+func (s *Show) EpisodesInRange(startDate, endDate *common.Date) []*Episode {
 	start := sort.Search(len(s.Episodes), func(i int) bool {
-		return s.Episodes[i].ReleaseDate.CompareTo(date) == 0
+		return s.Episodes[i].ReleaseDate.CompareTo(startDate) == 1
 	})
 	end := sort.Search(len(s.Episodes), func(i int) bool {
-		return s.Episodes[i].ReleaseDate.CompareTo(date) == 1
+		return s.Episodes[i].ReleaseDate.CompareTo(endDate) == 1
 	})
-	if start < end {
+	if start <= end {
 		return s.Episodes[start:end]
 	}
 	return make([]*Episode, 0)

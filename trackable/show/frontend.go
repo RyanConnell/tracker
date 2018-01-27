@@ -107,7 +107,6 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 
 	apiURL := "http://localhost:8080/api/show/"
 	url := fmt.Sprintf("%sget/schedule/%s/%s", apiURL, startDate, endDate)
-	fmt.Printf(url)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println(err)
