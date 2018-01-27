@@ -41,6 +41,7 @@ func (s *Show) Write() error {
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 
 	for _, e := range s.Episodes {
 		_, err = db.Exec(`INSERT INTO episodes(show_id, season, episode, title, release_date)

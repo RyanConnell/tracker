@@ -73,6 +73,9 @@ func (s *Show) scrapeEpisodes(url string) error {
 		if err != nil {
 			return err
 		}
+		if len(s.Episodes) != 0 {
+			previousDate = s.Episodes[len(s.Episodes)-1].ReleaseDate
+		}
 
 	}
 	return nil
@@ -106,6 +109,7 @@ func (s *Show) parseInfobox(infobox *scrape.Tag) error {
 
 func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *common.Date) error {
 	rows := table.FindAll("tr", nil)
+	fmt.Printf("\tPreviousDate: %v\n", previousDate)
 	for _, row := range rows {
 		if !row.Valid {
 			continue
@@ -119,7 +123,19 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *co
 		episodeNumStr := common.ParseString(columns[0].Text())
 		episodeNum, err := common.StringToInt(episodeNumStr)
 		if err != nil {
-			fmt.Errorf("Unable to convert %s to an integer: %v", episodeNumStr, err)
+			// If we have an error parsing the episodeNumber then it must be a string, so get the
+			// header instead.
+			id := row.FindAll("th", nil)
+			if len(id) == 0 {
+				fmt.Errorf("Unable to convert %s to an integer: %v", episodeNumStr, err)
+				continue
+			}
+			episodeNum, err = common.StringToInt(common.ParseString(id[0].Text()))
+			if err != nil {
+				fmt.Errorf("Unable to convert %s to an integer: %v", episodeNumStr, err)
+				continue
+			}
+
 		}
 
 		episode := &Episode{
@@ -153,6 +169,7 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *co
 
 		// If new date is less than previous date we can skip this episode.
 		// (Indicative of Webisodes)
+		fmt.Printf("\t\t| %v (%d)\n", episode.ReleaseDate, episode.ReleaseDate.CompareTo(previousDate))
 		if episode.ReleaseDate.CompareTo(previousDate) == -1 {
 			continue
 		}
