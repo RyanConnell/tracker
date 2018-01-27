@@ -55,7 +55,7 @@ type ScheduleItem struct {
 }
 
 func (h *Handler) Get(id int) (*ShowFull, error) {
-	if id <= 0 || len(h.shows) <= id {
+	if id <= 0 || len(h.shows) < id {
 		return nil, fmt.Errorf("Invalid show ID")
 	}
 	show := h.shows[id-1]
