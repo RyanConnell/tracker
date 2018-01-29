@@ -24,6 +24,7 @@ func (_ *API) RegisterHandlers(subdomain string) {
 	rtr.HandleFunc(fmt.Sprintf("/%s/", subdomain), defaultRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/{id:[0-9]+}", subdomain), getRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/list", subdomain), listRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/get/list/{type:[a-z]*}", subdomain), listRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/schedule/{start:[0-9-]+}/{end:[0-9-]+}", subdomain),
 		scheduleRequest)
 
@@ -67,7 +68,18 @@ func getRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func listRequest(w http.ResponseWriter, r *http.Request) {
-	list := api.handler.GetList()
+	params := mux.Vars(r)
+
+	listType, ok := params["type"]
+	if !ok {
+		listType = "all"
+	}
+
+	list, err := api.handler.GetList(listType)
+	if err != nil {
+		serveError(err, w, r)
+		return
+	}
 	body, err := json.Marshal(list)
 	if err != nil {
 		serveError(err, w, r)

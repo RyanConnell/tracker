@@ -25,6 +25,13 @@
 			</div>
 		{{ end }}
 
+		{{ if not .Shows }}
+			<div align="center">
+				<p>Sorry,<br/>No shows found in this category</p>
+			</div>
+			<br />
+		{{ end }}
+
 		</div>
 	</div>
 </body>

@@ -54,6 +54,13 @@ type ScheduleItem struct {
 	Episodes []*CalendarEntry `json:"episodes"`
 }
 
+var listFilters = map[string]func(*Show)bool{
+	"all": listFilterAll,
+	"airing": listFilterAiring,
+	"upcoming": listFilterUpcoming,
+	"unreleased": listFilterUnreleased,
+}
+
 func (h *Handler) Get(id int) (*ShowFull, error) {
 	if id <= 0 || len(h.shows) < id {
 		return nil, fmt.Errorf("Invalid show ID")
@@ -65,16 +72,22 @@ func (h *Handler) Get(id int) (*ShowFull, error) {
 	return sf, nil
 }
 
-func (h *Handler) GetList() ShowList {
-	shows := h.shows
-	showsSimple := make([]*ShowSimple, len(shows))
-	for i, show := range shows {
-		showsSimple[i] = showToSimple(show)
+func (h *Handler) GetList(listType string) (*ShowList, error) {
+	filter, ok := listFilters[listType]
+	if !ok {
+		return nil, fmt.Errorf("Unknown list type: %s", listType)
 	}
-	return ShowList{
+	shows := h.shows
+	showsSimple := make([]*ShowSimple, 0)
+	for _, show := range shows {
+		if filter(show) {
+			showsSimple = append(showsSimple, showToSimple(show))
+		}
+	}
+	return &ShowList{
 		Count: len(showsSimple),
 		Shows: showsSimple,
-	}
+	}, nil
 }
 
 func (h *Handler) GetSchedule(start, end string) (*Schedule, error) {
@@ -142,4 +155,28 @@ func showToSimple(show *Show) *ShowSimple {
 		Image: show.Image,
 	}
 	return &s
+}
+
+// listFilterAll will always return true.
+func listFilterAll(show *Show) bool {
+	return true
+}
+
+// listFilterAiring will return true for all shows that have aired in the last 30 days.
+func listFilterAiring(show *Show) bool {
+	lastMonth := common.CurrentDate().Minus(30)
+	if mostRecentEpisode := show.GetMostRecentEpisode(); mostRecentEpisode != nil {
+		return mostRecentEpisode.ReleaseDate.CompareTo(lastMonth) == 1
+	}
+	return false
+}
+
+// listFilterUpcoming will return true for all upcoming shows.
+func listFilterUpcoming(show *Show) bool {
+	return !listFilterAiring(show) && show.GetNextEpisode() != nil
+}
+
+// listFilterUnreleased will return true for all unreleased shows.
+func listFilterUnreleased(show *Show) bool {
+	return show.GetMostRecentEpisode() == nil
 }

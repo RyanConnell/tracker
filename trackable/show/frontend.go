@@ -25,9 +25,10 @@ var frontend *Frontend
 
 func (f *Frontend) RegisterHandlers(subdomain string) {
 	rtr := mux.NewRouter()
-	rtr.HandleFunc(fmt.Sprintf("/%s/", subdomain), f.indexRequest)
-	rtr.HandleFunc(fmt.Sprintf("/%s/{id:[0-9]+}", subdomain), f.detailRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/", subdomain), f.listRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/schedule", subdomain), f.scheduleRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/{type:[a-z]+}", subdomain), f.listRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/{id:[0-9]+}", subdomain), f.detailRequest)
 
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
@@ -49,13 +50,19 @@ func (f *Frontend) Init() error {
 	return nil
 }
 
-func (f *Frontend) indexRequest(w http.ResponseWriter, r *http.Request) {
+func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 	if DEVMODE {
 		f.Init()
 	}
 
+	params := mux.Vars(r)
+	listType, ok := params["type"]
+	if !ok {
+		listType = "all"
+	}
+
 	apiURL := "http://localhost:8080/api/show/"
-	resp, err := http.Get(fmt.Sprintf("%sget/list", apiURL))
+	resp, err := http.Get(fmt.Sprintf("%sget/list/%s", apiURL, listType))
 	if err != nil {
 		fmt.Println(err)
 		return
