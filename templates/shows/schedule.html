@@ -5,7 +5,7 @@
 <title>Show Tracker - Schedule</title>
 
 <body>
-	{{ template "navbar" }}
+	{{ template "navbar" . }}
 
 	<div class='show_container'>
 		{{ range $index, $item := .Items }}

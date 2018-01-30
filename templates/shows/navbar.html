@@ -19,7 +19,14 @@
 				</ul>
 			</li>
 			<a href="/show/schedule"><li>Schedule</li></a>	
-			<li id='login_button'><strike>Login</strike></li>
+				{{ if .User.Username }}	
+					<a href="/logout">
+						<li style="width:auto">{{ .User.Username }}</li>
+					</a>
+				{{ else }}
+					<a href="/login"><li id='login_button'>Login</li></a>
+				{{ end }}
+			</li>
 		</ul>
 	</div>
 </div>

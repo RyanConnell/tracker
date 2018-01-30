@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"tracker/server/auth"
 	"tracker/templates"
 	"tracker/trackable/common"
 
@@ -27,6 +28,7 @@ var frontend *Frontend
 func (f *Frontend) RegisterHandlers(subdomain string) {
 	rtr := mux.NewRouter()
 	rtr.HandleFunc(fmt.Sprintf("/%s/", subdomain), f.listRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/request", subdomain), f.addShowRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/schedule", subdomain), f.scheduleRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/{type:[a-z]+}", subdomain), f.listRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/{id:[0-9]+}", subdomain), f.detailRequest)
@@ -81,7 +83,18 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 	var jsonRep ShowList
 	decode.Decode(&jsonRep)
 
-	err = f.templates.ExecuteTemplate(w, "index.html", jsonRep)
+	user, err := auth.CurrentUser(r)
+	if err != nil {
+		fmt.Println("Error getting current user: %v\n", err)
+	}
+
+	data := struct {
+		ShowList
+		User auth.User
+	}{jsonRep, user}
+
+	fmt.Printf("\tTemplate: User=%v\n", user)
+	err = f.templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		serveError(err, w, r)
 	}
@@ -104,7 +117,19 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 	var jsonRep ShowFull
 	decode.Decode(&jsonRep)
 
-	err = f.templates.ExecuteTemplate(w, "detail.html", jsonRep)
+	user, err := auth.CurrentUser(r)
+	if err != nil {
+		fmt.Println("Error getting current user: %v\n", err)
+	}
+
+	data := struct {
+		ShowFull
+		User auth.User
+	}{jsonRep, user}
+
+	fmt.Printf("\tTemplate: User=%v\n", user)
+
+	err = f.templates.ExecuteTemplate(w, "detail.html", data)
 	if err != nil {
 		serveError(err, w, r)
 	}
@@ -128,7 +153,50 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	var jsonRep Schedule
 	decode.Decode(&jsonRep)
 
-	err = f.templates.ExecuteTemplate(w, "schedule.html", jsonRep)
+	user, err := auth.CurrentUser(r)
+	if err != nil {
+		fmt.Println("Error getting current user: %v\n", err)
+	}
+
+	data := struct {
+		Schedule
+		User auth.User
+	}{jsonRep, user}
+
+	fmt.Printf("\tTemplate: User=%v\n", user)
+
+	err = f.templates.ExecuteTemplate(w, "schedule.html", data)
+	if err != nil {
+		serveError(err, w, r)
+	}
+}
+
+func (f *Frontend) loginRequest(w http.ResponseWriter, r *http.Request) {
+	if DEVMODE {
+		f.Init()
+	}
+
+	err := f.templates.ExecuteTemplate(w, "login.html", nil)
+	if err != nil {
+		serveError(err, w, r)
+	}
+}
+
+func (f *Frontend) addShowRequest(w http.ResponseWriter, r *http.Request) {
+	if DEVMODE {
+		f.Init()
+	}
+
+	user, err := auth.CurrentUser(r)
+	if err != nil {
+		fmt.Printf("Error getting current user: %v\n", err)
+	}
+
+	data := struct {
+		User auth.User
+	}{user}
+
+	err = f.templates.ExecuteTemplate(w, "add_show.html", data)
 	if err != nil {
 		serveError(err, w, r)
 	}

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"time"
 
+	"tracker/database"
 	"tracker/trackable/common"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -37,7 +38,7 @@ type Episode struct {
 }
 
 func (s *Show) Write() error {
-	db, err := openDB("tracker")
+	db, err := database.Open("tracker")
 	if err != nil {
 		return err
 	}
@@ -171,7 +172,7 @@ func (e *Episode) Scan(rows *sql.Rows) error {
 func loadAllShows() ([]*Show, error) {
 	shows := make([]*Show, 0)
 
-	db, err := openDB("tracker")
+	db, err := database.Open("tracker")
 	if err != nil {
 		return shows, err
 	}
@@ -201,7 +202,7 @@ func loadAllShows() ([]*Show, error) {
 func (s *Show) loadAllEpisodes() error {
 	s.Episodes = make([]*Episode, 0)
 
-	db, err := openDB("tracker")
+	db, err := database.Open("tracker")
 	if err != nil {
 		return err
 	}
@@ -222,12 +223,4 @@ func (s *Show) loadAllEpisodes() error {
 		s.Episodes = append(s.Episodes, episode)
 	}
 	return nil
-}
-
-func openDB(name string) (*sql.DB, error) {
-	db, err := sql.Open("mysql", fmt.Sprintf("rhino:@/%s", name))
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
 }
