@@ -84,27 +84,27 @@ ul li:hover ul {
 }
 
 h1.title {
-	text-align:center;
+	text-align:left;
 	margin-bottom:0;
+	margin-left: 20px;
 	padding-bottom:0;
 	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	margin-left: auto;
-	margin-right: auto;
-	width: auto;
+	top: 0px;
 	height: 0;
 	color: white;
 	text-shadow:0 2px 6px rgba(0,0,0,0.4);
 }
 
 div.navigation {
-	margin-left:50%;
 	padding: 0;
 	text-align: right;
-	position: absolute;
 	top: 0;
-	right: 0;
-	width: auto;
+	float: right;
+	margin-top:-40px;
 }
+
+div.nav {
+	margin: 0px auto 20px auto;
+	width: 1000px;
+}
+
