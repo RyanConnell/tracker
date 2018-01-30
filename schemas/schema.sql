@@ -20,3 +20,12 @@ CREATE TABLE `tracker`.`episodes` (
 	PRIMARY KEY(id),
 	UNIQUE KEY(show_id, season, episode)
 );
+
+CREATE DATABASE IF NOT EXISTS `accounts`;
+
+CREATE TABLE IF NOT EXISTS `accounts`.`users` (
+	id INTEGER NOT NULL AUTO_INCREMENT,
+	username VARCHAR(255) NOT NULl,
+	email VARCHAR(255) UNIQUE NOT NULL,
+	PRIMARY KEY(id)
+);

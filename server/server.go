@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"tracker/server/auth"
 	"tracker/trackable/common"
 	"tracker/trackable/show"
 )
@@ -32,6 +33,9 @@ func Launch(host *common.Host) {
 	show_frontend := &show.Frontend{}
 	show_frontend.RegisterHandlers("show")
 	frontends = append(frontends, show_frontend)
+
+	// Register the auth frontend.
+	auth.RegisterHandlers()
 
 	// Register public files such as CSS, JS, and Images.
 	http.Handle("/public/", http.StripPrefix("/public/",
