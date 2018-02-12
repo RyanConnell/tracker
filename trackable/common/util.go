@@ -3,6 +3,7 @@ package common
 import (
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -53,4 +54,9 @@ func LoadSettings(filename string) map[string]string {
 		}
 	}
 	return settings
+}
+
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
 }

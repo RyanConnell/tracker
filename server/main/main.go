@@ -9,7 +9,7 @@ var hostFile string = "host.conf"
 
 func main() {
 	host := &common.Host{}
-	err := host.Init(common.LoadSettings(hostFile))
+	err := host.Init(hostFile)
 	if err != nil {
 		panic(err)
 	}
