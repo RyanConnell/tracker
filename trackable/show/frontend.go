@@ -17,6 +17,7 @@ const DEVMODE = true
 // Frontend implemnts server.Frontend
 type Frontend struct {
 	name      string
+	host      *common.Host
 	handler   Handler
 	templates *template.Template
 }
@@ -33,9 +34,10 @@ func (f *Frontend) RegisterHandlers(subdomain string) {
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
-func (f *Frontend) Init() error {
+func (f *Frontend) Init(host *common.Host) error {
 	fmt.Println("Show Frontend Initialised")
 	frontend = f
+	f.host = host
 
 	// Define all template functions
 	funcMap := template.FuncMap{
@@ -50,10 +52,17 @@ func (f *Frontend) Init() error {
 	return nil
 }
 
-func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
+// Reload is only used for debugging/dev purposes. It will reinitialize the frontend each time it's
+// called. This helps with development as we don't have to restart the server to see updates in
+// the templates
+func (f *Frontend) Reload() {
 	if DEVMODE {
-		f.Init()
+		f.Init(f.host)
 	}
+}
+
+func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
+	f.Reload()
 
 	params := mux.Vars(r)
 	listType, ok := params["type"]
@@ -61,8 +70,8 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 		listType = "all"
 	}
 
-	apiURL := "http://localhost:8080/api/show/"
-	resp, err := http.Get(fmt.Sprintf("%sget/list/%s", apiURL, listType))
+	apiURL := fmt.Sprintf("%s/api/show/get/list/%s", f.host.Address(), listType)
+	resp, err := http.Get(apiURL)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -79,15 +88,13 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
-	if DEVMODE {
-		f.Init()
-	}
+	f.Reload()
 
 	params := mux.Vars(r)
 	id := params["id"]
 
-	apiURL := "http://localhost:8080/api/show"
-	resp, err := http.Get(fmt.Sprintf("%s/get/%s", apiURL, id))
+	apiURL := fmt.Sprintf("%s/api/show/get/%s", f.host.Address(), id)
+	resp, err := http.Get(apiURL)
 	if err != nil {
 		serveError(err, w, r)
 		return
@@ -104,17 +111,14 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
-	if DEVMODE {
-		f.Init()
-	}
+	f.Reload()
 
 	curDate := common.CurrentDate()
 	startDate := curDate.Minus(7 + curDate.Weekday())
 	endDate := startDate.Plus((7 * 7) - 1)
 
-	apiURL := "http://localhost:8080/api/show/"
-	url := fmt.Sprintf("%sget/schedule/%s/%s", apiURL, startDate, endDate)
-	resp, err := http.Get(url)
+	apiUrl := fmt.Sprintf("%s/api/show/get/schedule/%s/%s", f.host.Address(), startDate, endDate)
+	resp, err := http.Get(apiUrl)
 	if err != nil {
 		fmt.Println(err)
 		return

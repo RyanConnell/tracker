@@ -47,7 +47,7 @@ func (s *Show) Write() error {
 		 		          VALUES(?, ?, ?, ?, ?)`, s.ID, e.Season, e.Episode, e.Title,
 			e.ReleaseDate.ToTime())
 		if err != nil {
-			return err
+			fmt.Println("Error with show %d: %v", s.ID, err);
 		}
 	}
 

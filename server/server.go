@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"tracker/trackable/common"
 	"tracker/trackable/show"
 )
 
@@ -17,11 +18,11 @@ type API interface {
 
 type Frontend interface {
 	RegisterHandlers(subdomain string)
-	Init() error
+	Init(host *common.Host) error
 }
 
-func Launch(port int) {
-	fmt.Printf("Starting server on port %d\n", port)
+func Launch(host *common.Host) {
+	fmt.Printf("Starting server on %s\n", host.Address())
 
 	// Register the Show API.
 	show_api := &show.API{}
@@ -41,13 +42,13 @@ func Launch(port int) {
 	}
 
 	for _, frontend := range frontends {
-		frontend.Init()
+		frontend.Init(host)
 	}
 
 	fmt.Printf("%d frontends registered\n", len(frontends))
 	fmt.Printf("%d apis registered\n", len(apis))
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", host.Port()), nil)
 	fmt.Printf("Error encountered; %v", err)
 }
 
