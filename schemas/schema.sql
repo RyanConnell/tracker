@@ -1,7 +1,6 @@
 CREATE DATABASE IF NOT EXISTS `tracker`;
 
-DROP TABLE IF EXISTS `tracker`.`shows`;
-CREATE TABLE `tracker`.`shows` (
+CREATE TABLE IF NOT EXISTS `tracker`.`shows` (
 	id INTEGER NOT NULL AUTO_INCREMENT,
 	title VARCHAR(255) NOT NULL,
 	wikipedia VARCHAR(255),
