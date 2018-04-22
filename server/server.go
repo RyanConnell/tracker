@@ -35,7 +35,8 @@ func Launch(host *common.Host) {
 	frontends = append(frontends, show_frontend)
 
 	// Register the auth frontend.
-	auth.RegisterHandlers()
+	auth_api := &auth.API{}
+	auth_api.Init(host)
 
 	// Register public files such as CSS, JS, and Images.
 	http.Handle("/public/", http.StripPrefix("/public/",

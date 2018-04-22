@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"tracker/server/page"
+	"tracker/trackable/common"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -32,14 +33,27 @@ const (
 	clientSecret = "XYx79SpBg9TlnTdpjSFL_zT-"
 )
 
-var conf = &oauth2.Config{
-	ClientID:     clientID,
-	ClientSecret: clientSecret,
-	RedirectURL:  "http://localhost:8080/auth",
-	Scopes: []string{
-		"https://www.googleapis.com/auth/userinfo.email",
-	},
-	Endpoint: google.Endpoint,
+type API struct {
+	host *common.Host
+	conf *oauth2.Config
+}
+
+var api *API
+
+func (a *API) Init(host* common.Host) error {
+	api = a
+	a.host = host
+	a.conf = &oauth2.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  fmt.Sprintf("%s/auth", api.host.Address()),
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
+		},
+		Endpoint: google.Endpoint,
+	}
+	RegisterHandlers()
+	return nil
 }
 
 var sessionKey = randomString()
@@ -59,7 +73,7 @@ func GetSession(r *http.Request, name string) (*sessions.Session, error) {
 
 // State must be a randomly generated hash string.
 func getLoginURL(state string) string {
-	return conf.AuthCodeURL(state)
+	return api.conf.AuthCodeURL(state)
 }
 
 func randomString() string {
@@ -94,7 +108,7 @@ func logoutRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "http://localhost:8080/show", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("%s/show", api.host.Address()), http.StatusSeeOther)
 }
 
 func authRequest(w http.ResponseWriter, r *http.Request) {
@@ -110,13 +124,13 @@ func authRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := conf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
+	token, err := api.conf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
 	if err != nil {
 		serveError(fmt.Errorf("Error exchanging token: %v\n", err), w)
 		return
 	}
 
-	client := conf.Client(oauth2.NoContext, token)
+	client := api.conf.Client(oauth2.NoContext, token)
 	info, err := gatherUserInfo(client)
 	if err != nil {
 		serveError(err, w)
@@ -145,7 +159,7 @@ func authRequest(w http.ResponseWriter, r *http.Request) {
 	session.Values["user-id"] = user.Email
 	session.Save(r, w)
 
-	http.Redirect(w, r, "http://localhost:8080/show", http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("%s/show", api.host.Address()), http.StatusSeeOther)
 }
 
 func gatherUserInfo(client *http.Client) (*GoogleUserInfo, error) {
