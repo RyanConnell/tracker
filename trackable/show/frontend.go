@@ -172,9 +172,7 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *Frontend) loginRequest(w http.ResponseWriter, r *http.Request) {
-	if DEVMODE {
-		f.Init()
-	}
+	f.Reload()
 
 	err := f.templates.ExecuteTemplate(w, "login.html", nil)
 	if err != nil {
@@ -183,9 +181,7 @@ func (f *Frontend) loginRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *Frontend) addShowRequest(w http.ResponseWriter, r *http.Request) {
-	if DEVMODE {
-		f.Init()
-	}
+	f.Reload()
 
 	user, err := auth.CurrentUser(r)
 	if err != nil {
