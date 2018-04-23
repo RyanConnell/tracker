@@ -27,11 +27,11 @@
 					<li style="width:auto">{{ .User.Username }}
 						<ul>
 						<a href="/show/request"><li>Request</li></a>
-						<a href="/logout"><li>Logout</li></a>
+						<a href="/auth/logout"><li>Logout</li></a>
 						</ul>
 					</li>
 				{{ else }}
-					<a href="/login"><li id='login_button'>Login</li></a>
+					<a href="/auth/login"><li id='login_button'>Login</li></a>
 				{{ end }}
 			</ul>
 		</div>

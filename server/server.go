@@ -42,6 +42,9 @@ func Launch(host *common.Host, settings map[string]string) {
 	http.Handle("/public/", http.StripPrefix("/public/",
 		http.FileServer(http.Dir("templates/public"))))
 
+	// Register our landing page.
+	http.HandleFunc("/", landingPage)
+
 	for _, api := range apis {
 		api.Init()
 	}
@@ -55,4 +58,8 @@ func Launch(host *common.Host, settings map[string]string) {
 
 	err := http.ListenAndServe(fmt.Sprintf(":%d", host.Port()), nil)
 	fmt.Printf("Error encountered; %v", err)
+}
+
+func landingPage(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/show", http.StatusSeeOther)
 }

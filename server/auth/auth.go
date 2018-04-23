@@ -52,7 +52,7 @@ func (a *API) Init(host *common.Host, authConfig map[string]string) error {
 	a.conf = &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  fmt.Sprintf("%s/auth", api.host.Address()),
+		RedirectURL:  fmt.Sprintf("%s/auth/authenticate", api.host.Address()),
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 		},
@@ -67,10 +67,10 @@ var store = sessions.NewCookieStore([]byte(sessionKey))
 
 func RegisterHandlers() {
 	rtr := mux.NewRouter()
-	rtr.HandleFunc("/login", loginRequest)
-	rtr.HandleFunc("/logout", logoutRequest)
-	rtr.HandleFunc("/auth", authRequest)
-	http.Handle("/", rtr)
+	rtr.HandleFunc("/auth/login", loginRequest)
+	rtr.HandleFunc("/auth/logout", logoutRequest)
+	rtr.HandleFunc("/auth/authenticate", authRequest)
+	http.Handle("/auth/", rtr)
 }
 
 func GetSession(r *http.Request, name string) (*sessions.Session, error) {
@@ -114,7 +114,7 @@ func logoutRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, fmt.Sprintf("%s/show", api.host.Address()), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("%s/", api.host.Address()), http.StatusSeeOther)
 }
 
 func authRequest(w http.ResponseWriter, r *http.Request) {
