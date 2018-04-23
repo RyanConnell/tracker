@@ -28,11 +28,6 @@ type GoogleUserInfo struct {
 	Gender        string `json:"gender"`
 }
 
-const (
-	clientID     = "GOOGLE_CLIENT_ID"
-	clientSecret = "GOOGLE_CLIENT_SECRET"
-)
-
 type API struct {
 	host *common.Host
 	conf *oauth2.Config
@@ -40,9 +35,20 @@ type API struct {
 
 var api *API
 
-func (a *API) Init(host* common.Host) error {
+func (a *API) Init(host *common.Host, authConfig map[string]string) error {
 	api = a
 	a.host = host
+
+	clientID, ok := authConfig["google_client_id"]
+	if !ok {
+		return fmt.Errorf("Unable to get google_client_id from settings.conf")
+	}
+
+	clientSecret, ok := authConfig["google_client_secret"]
+	if !ok {
+		return fmt.Errorf("Unable to get google_client_secret from settings.conf")
+	}
+
 	a.conf = &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,

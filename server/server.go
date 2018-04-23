@@ -22,7 +22,7 @@ type Frontend interface {
 	Init(host *common.Host) error
 }
 
-func Launch(host *common.Host) {
+func Launch(host *common.Host, settings map[string]string) {
 	fmt.Printf("Starting server on %s\n", host.Address())
 
 	// Register the Show API.
@@ -36,7 +36,7 @@ func Launch(host *common.Host) {
 
 	// Register the auth frontend.
 	auth_api := &auth.API{}
-	auth_api.Init(host)
+	auth_api.Init(host, settings)
 
 	// Register public files such as CSS, JS, and Images.
 	http.Handle("/public/", http.StripPrefix("/public/",
@@ -56,20 +56,3 @@ func Launch(host *common.Host) {
 	err := http.ListenAndServe(fmt.Sprintf(":%d", host.Port()), nil)
 	fmt.Printf("Error encountered; %v", err)
 }
-
-/*
-func getRequest(w http.ResponseWriter, r *http.Request) {
-	show := &show.Show{
-		Name:     "Arrow",
-		Finished: false,
-	}
-
-	body, err := json.Marshal(show)
-	if err != nil {
-		renderError(fmt.Sprintf("%v", err), w)
-	}
-
-	page := Page{body}
-	page.servePage(w)
-}
-*/
