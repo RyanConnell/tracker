@@ -93,7 +93,7 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("\tTemplate: User=%v\n", user)
 	err = f.templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 	}
 }
 
@@ -106,7 +106,7 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 	apiURL := fmt.Sprintf("%s/api/show/get/%s", f.host.Address(), id)
 	resp, err := http.Get(apiURL)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 		return
 	}
 
@@ -128,7 +128,7 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 
 	err = f.templates.ExecuteTemplate(w, "detail.html", data)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 	}
 }
 
@@ -164,7 +164,7 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 
 	err = f.templates.ExecuteTemplate(w, "schedule.html", data)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 	}
 }
 
@@ -173,7 +173,7 @@ func (f *Frontend) loginRequest(w http.ResponseWriter, r *http.Request) {
 
 	err := f.templates.ExecuteTemplate(w, "login.html", nil)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 	}
 }
 
@@ -191,6 +191,6 @@ func (f *Frontend) addShowRequest(w http.ResponseWriter, r *http.Request) {
 
 	err = f.templates.ExecuteTemplate(w, "add_show.html", data)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 	}
 }

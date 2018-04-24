@@ -1,7 +1,29 @@
 <html>
 <head>
 	<link rel="stylesheet" type="text/css" href="/public/css/material.css" \>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 	<title>Show Tracker - Request a Show</title>
+
+	<script>
+		function submitFunc() {
+			$.ajax({
+				url:'/api/show/request/addShow',
+				type: 'post',
+				data: $('#form').serialize(),
+				success: function(data) {
+					handleShowResponse(data);
+				},
+				error: function(data) {
+					handleShowResponse(data);
+				}
+			});
+		}
+
+		function handleShowResponse(data) {
+			alert("Show Response: " + data);
+			var elem = document.getElementById('form').reset();
+		}
+	</script>
 </head>
 
 <body>
@@ -9,10 +31,37 @@
 
 	<div class="show_container">
 		{{ if .User.Username }}
-			Feature not yet ready.
+			<div class="centered-form">
+				<h3 class="header"><u>Show Request:</u></h3>
+				<i>Fields marked with * are mandatory</i>
+
+				<form id="form", onsubmit="submitFunc(); return false">
+					<table class="centered-form">
+						<tr>
+							<td>Show Name*</td>
+							<td><input type="text" name="title" required></td>
+						</tr>
+						<tr>
+							<td>Wikipedia URL</td>
+							<td><input type="text" name="wikipedia"></td>
+						</tr>
+						<tr>
+							<td>Trailer URL</td>
+							<td><input type="text" name="trailer"></td>
+						</tr>
+						<tr>
+							<td>Image URL</td>
+							<td><input type="text" name="img"></td>
+						</tr>
+					</table>
+					<input type="submit" value="Submit" action="#">
+				</form>
+
+			</div>
 		{{ else }}
 			You must be logged in to proceed.
 		{{ end }}	
+		<br /><br />
 	</div>
 </body>
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"tracker/server/auth"
 	"tracker/server/page"
 	"tracker/trackable/common"
 
@@ -27,6 +28,7 @@ func (a *API) RegisterHandlers(subdomain string) {
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/list/{type:[a-z]*}", subdomain), a.listRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/schedule/{start:[0-9-]+}/{end:[0-9-]+}", subdomain),
 		a.scheduleRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/request/addShow", subdomain), a.addShowRequest)
 
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
@@ -46,19 +48,19 @@ func (a *API) getRequest(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 		return
 	}
 
 	show, err := a.handler.Get(id)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 		return
 	}
 
 	body, err := json.Marshal(show)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 		return
 	}
 	p := page.Page{body}
@@ -75,12 +77,12 @@ func (a *API) listRequest(w http.ResponseWriter, r *http.Request) {
 
 	list, err := a.handler.GetList(listType)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 		return
 	}
 	body, err := json.Marshal(list)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 		return
 	}
 	p := page.Page{body}
@@ -91,18 +93,52 @@ func (a *API) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	schedule, err := a.handler.GetSchedule(params["start"], params["end"])
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 	}
 	body, err := json.Marshal(schedule)
 	if err != nil {
-		serveError(err, w, r)
+		serveError(err, w)
 		return
 	}
 	p := page.Page{body}
 	p.ServePage(w)
 }
 
-func serveError(err error, w http.ResponseWriter, r *http.Request) {
+func (a *API) addShowRequest(w http.ResponseWriter, r *http.Request) {
+	user, err := auth.CurrentUser(r)
+	if err != nil {
+		serveRequestResult(false, err, w)
+		return
+	}
+	title := r.FormValue("title")
+	wikipedia := r.FormValue("wikipedia")
+	trailer := r.FormValue("trailer")
+	coverImg := r.FormValue("img")
+
+	success, err := a.handler.RequestShow(&user, title, wikipedia, trailer, coverImg)
+	serveRequestResult(success, err, w)
+}
+
+func serveError(err error, w http.ResponseWriter) {
 	p := page.Page{[]byte(fmt.Sprintf("Error occured: %v", err.Error()))}
+	p.ServePage(w)
+}
+
+func serveRequestResult(success bool, err error, w http.ResponseWriter) {
+	result := struct {
+		Success bool   `json:"success"`
+		Error   string `json:"error"`
+	}{success, ""}
+
+	if err != nil {
+		result.Error = err.Error()
+	}
+
+	body, err := json.Marshal(result)
+	if err != nil {
+		serveError(err, w)
+		return
+	}
+	p := page.Page{body}
 	p.ServePage(w)
 }

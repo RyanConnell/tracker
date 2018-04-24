@@ -9,8 +9,7 @@ CREATE TABLE IF NOT EXISTS `tracker`.`shows` (
 	PRIMARY KEY(id)
 );
 
-DROP TABLE IF EXISTS `tracker`.`episodes`;
-CREATE TABLE `tracker`.`episodes` (
+CREATE TABLE IF NOT EXISTS `tracker`.`episodes` (
 	id INTEGER NOT NULL AUTO_INCREMENT,
 	show_id INTEGER NOT NULL,
 	season INTEGER NOT NULL,
@@ -20,6 +19,16 @@ CREATE TABLE `tracker`.`episodes` (
 	PRIMARY KEY(id),
 	UNIQUE KEY(show_id, season, episode)
 );
+
+CREATE TABLE IF NOT EXISTS `tracker`.`requests` (
+	id INTEGER NOT NULL AUTO_INCREMENT,
+	username VARCHAR(255) NOT NULL,
+	title VARCHAR(255) NOT NULL,
+	wikipedia VARCHAR(255) NOT NULL,
+	trailer VARCHAR(255),
+	cover_image VARCHAR(255),
+	PRIMARY KEY(id)
+)
 
 CREATE DATABASE IF NOT EXISTS `accounts`;
 
