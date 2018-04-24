@@ -42,13 +42,14 @@ func (s *Show) Write() error {
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 
 	for _, e := range s.Episodes {
 		_, err = db.Exec(`INSERT INTO episodes(show_id, season, episode, title, release_date)
 		 		          VALUES(?, ?, ?, ?, ?)`, s.ID, e.Season, e.Episode, e.Title,
 			e.ReleaseDate.ToTime())
 		if err != nil {
-			fmt.Println("Error with show %d: %v", s.ID, err);
+			fmt.Println("Error with show %d: %v", s.ID, err)
 		}
 	}
 
