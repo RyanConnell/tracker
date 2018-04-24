@@ -3,6 +3,8 @@ package show
 import (
 	"fmt"
 
+	"tracker/database"
+	"tracker/server/auth"
 	"tracker/trackable/common"
 )
 
@@ -54,10 +56,10 @@ type ScheduleItem struct {
 	Episodes []*CalendarEntry `json:"episodes"`
 }
 
-var listFilters = map[string]func(*Show)bool{
-	"all": listFilterAll,
-	"airing": listFilterAiring,
-	"upcoming": listFilterUpcoming,
+var listFilters = map[string]func(*Show) bool{
+	"all":        listFilterAll,
+	"airing":     listFilterAiring,
+	"upcoming":   listFilterUpcoming,
 	"unreleased": listFilterUnreleased,
 }
 
@@ -155,6 +157,36 @@ func showToSimple(show *Show) *ShowSimple {
 		Image: show.Image,
 	}
 	return &s
+}
+
+func (h *Handler) RequestShow(u *auth.User, title, wikipedia, trailer, img string) (bool, error) {
+	db, err := database.Open("tracker")
+	if err != nil {
+		return false, err
+	}
+
+	if title == "" {
+		return false, fmt.Errorf("No show given")
+	}
+
+	fmt.Printf("Requested: %s, %s, %s, %s", title, wikipedia, trailer, img)
+	rows, err := db.Query(`SELECT id FROM requests WHERE title=? OR wikipedia=?`, title, wikipedia)
+	if err != nil {
+		return false, fmt.Errorf("Error retrieving currently requested shows: %v", err)
+	}
+	if rows.Next() {
+		var id int
+		rows.Scan(&id)
+		return false, fmt.Errorf("Show already requested: %d", id)
+	}
+
+	_, err = db.Exec(`INSERT INTO requests(username, title, wikipedia, trailer, cover_image)
+			 VALUES(?, ?, ?, ?, ?)`, u.Username, title, wikipedia, trailer, img)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // listFilterAll will always return true.

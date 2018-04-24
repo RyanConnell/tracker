@@ -262,11 +262,6 @@ div.image:hover div.show_title, img{
 	background-color: rgba(0, 0, 0, 0.0);
 }
 
-input {
-	position:absolute;
-	visibility: hidden;
-}
-
 img.cover {
 	box-shadow:0 2px 6px rgba(0,0,0,0.6);
 	border-radius:4px;
@@ -482,7 +477,7 @@ p.release_info {
 	box-shadow:0 2px 6px rgba(0,0,0,0.6);
 }
 
-p.show_info { 
+p.show_info {
 	color: black;
 	text-align:center;
 	border-radius: 2px;
@@ -500,7 +495,21 @@ p.show_info {
 	border-color: #FFFFFF;
 	z-index: 1;
 	box-shadow:0 2px 6px rgba(0,0,0,0.6);
-} 
+}
 
+div.centered-form {
+	margin: 0 auto;
+	text-align: center;
+	
+}
 
+table.centered-form {
+	margin: 0 auto;
+	text-align: right;
+	padding: 10px;
+}
+
+table.centered-form, tr, td{
+	padding-right: 20px;
+	padding-bottom: 5px;
 }
