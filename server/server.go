@@ -14,7 +14,7 @@ var frontends []Frontend = make([]Frontend, 0)
 
 type API interface {
 	RegisterHandlers(subdomain string)
-	Init() error
+	Init(host *common.Host) error
 }
 
 type Frontend interface {
@@ -46,7 +46,7 @@ func Launch(host *common.Host, settings map[string]string) {
 	http.HandleFunc("/", landingPage)
 
 	for _, api := range apis {
-		api.Init()
+		api.Init(host)
 	}
 
 	for _, frontend := range frontends {

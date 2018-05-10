@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const DEVMODE = true
+const DEVMODE = false
 
 // Frontend implemnts server.Frontend
 type Frontend struct {
@@ -22,8 +22,6 @@ type Frontend struct {
 	handler   Handler
 	templates *template.Template
 }
-
-var frontend *Frontend
 
 func (f *Frontend) RegisterHandlers(subdomain string) {
 	rtr := mux.NewRouter()
@@ -38,7 +36,6 @@ func (f *Frontend) RegisterHandlers(subdomain string) {
 
 func (f *Frontend) Init(host *common.Host) error {
 	fmt.Println("Show Frontend Initialised")
-	frontend = f
 	f.host = host
 
 	// Define all template functions
