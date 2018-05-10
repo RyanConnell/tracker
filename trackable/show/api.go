@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"tracker/server/page"
+	"tracker/trackable/common"
 
 	"github.com/gorilla/mux"
 )
@@ -15,36 +16,33 @@ import (
 type API struct {
 	name    string
 	handler Handler
+	host    *common.Host
 }
 
-var api *API
-
-func (_ *API) RegisterHandlers(subdomain string) {
+func (a *API) RegisterHandlers(subdomain string) {
 	rtr := mux.NewRouter()
-	rtr.HandleFunc(fmt.Sprintf("/%s/", subdomain), defaultRequest)
-	rtr.HandleFunc(fmt.Sprintf("/%s/get/{id:[0-9]+}", subdomain), getRequest)
-	rtr.HandleFunc(fmt.Sprintf("/%s/get/list", subdomain), listRequest)
-	rtr.HandleFunc(fmt.Sprintf("/%s/get/list/{type:[a-z]*}", subdomain), listRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/", subdomain), a.defaultRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/get/{id:[0-9]+}", subdomain), a.getRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/get/list", subdomain), a.listRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/get/list/{type:[a-z]*}", subdomain), a.listRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/schedule/{start:[0-9-]+}/{end:[0-9-]+}", subdomain),
-		scheduleRequest)
+		a.scheduleRequest)
 
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
-func (a *API) Init() error {
+func (a *API) Init(*common.Host) error {
 	fmt.Println("Show APi Initialised")
-	api = a
-	api.handler = Handler{}
-	api.handler.Init()
+	a.handler.Init()
 	return nil
 }
 
-func defaultRequest(w http.ResponseWriter, r *http.Request) {
+func (a *API) defaultRequest(w http.ResponseWriter, r *http.Request) {
 	p := page.Page{[]byte("Show API landing page - Perhaps serve a README here?")}
 	p.ServePage(w)
 }
 
-func getRequest(w http.ResponseWriter, r *http.Request) {
+func (a *API) getRequest(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -52,7 +50,7 @@ func getRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	show, err := api.handler.Get(id)
+	show, err := a.handler.Get(id)
 	if err != nil {
 		serveError(err, w, r)
 		return
@@ -67,7 +65,7 @@ func getRequest(w http.ResponseWriter, r *http.Request) {
 	p.ServePage(w)
 }
 
-func listRequest(w http.ResponseWriter, r *http.Request) {
+func (a *API) listRequest(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
 	listType, ok := params["type"]
@@ -75,7 +73,7 @@ func listRequest(w http.ResponseWriter, r *http.Request) {
 		listType = "all"
 	}
 
-	list, err := api.handler.GetList(listType)
+	list, err := a.handler.GetList(listType)
 	if err != nil {
 		serveError(err, w, r)
 		return
@@ -89,9 +87,9 @@ func listRequest(w http.ResponseWriter, r *http.Request) {
 	p.ServePage(w)
 }
 
-func scheduleRequest(w http.ResponseWriter, r *http.Request) {
+func (a *API) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	schedule, err := api.handler.GetSchedule(params["start"], params["end"])
+	schedule, err := a.handler.GetSchedule(params["start"], params["end"])
 	if err != nil {
 		serveError(err, w, r)
 	}
