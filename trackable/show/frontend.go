@@ -87,13 +87,18 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("Error getting current user: %v\n", err)
 	}
+	fmt.Printf("[Frontend] [Show] listRequest: CurrentUser=%v\n", user)
 
 	data := struct {
 		ShowList
 		User auth.User
-	}{jsonRep, user}
+	}{jsonRep, auth.User{}}
 
-	fmt.Printf("\tTemplate: User=%v\n", user)
+	if user != nil {
+		data.User = *user
+	}
+
+	fmt.Printf("Template: User=%v\n", user)
 	err = f.templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		serveError(err, w)
@@ -125,7 +130,11 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		ShowFull
 		User auth.User
-	}{jsonRep, user}
+	}{jsonRep, auth.User{}}
+
+	if user != nil {
+		data.User = *user
+	}
 
 	fmt.Printf("\tTemplate: User=%v\n", user)
 
@@ -161,7 +170,11 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	data := struct {
 		Schedule
 		User auth.User
-	}{jsonRep, user}
+	}{jsonRep, auth.User{}}
+
+	if user != nil {
+		data.User = *user
+	}
 
 	fmt.Printf("\tTemplate: User=%v\n", user)
 
@@ -187,10 +200,13 @@ func (f *Frontend) addShowRequest(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Printf("Error getting current user: %v\n", err)
 	}
-
 	data := struct {
 		User auth.User
-	}{user}
+	}{auth.User{}}
+
+	if user != nil {
+		data.User = *user
+	}
 
 	err = f.templates.ExecuteTemplate(w, "add_show.html", data)
 	if err != nil {

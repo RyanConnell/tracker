@@ -28,7 +28,14 @@ CREATE TABLE IF NOT EXISTS `tracker`.`requests` (
 	trailer VARCHAR(255),
 	cover_image VARCHAR(255),
 	PRIMARY KEY(id)
-)
+);
+
+CREATE TABLE IF NOT EXISTS `tracker`.`tracked` (
+	user_id VARCHAR(255) NOT NULL,
+	show_id INTEGER NOT NULL,
+	tracked BOOLEAN NOT NULL,
+	UNIQUE KEY(user_id, show_id)
+);
 
 CREATE DATABASE IF NOT EXISTS `accounts`;
 

@@ -2,6 +2,7 @@ package show
 
 import (
 	"fmt"
+	"strconv"
 
 	"tracker/database"
 	"tracker/server/auth"
@@ -24,9 +25,10 @@ func (h *Handler) Init() {
 }
 
 type ShowSimple struct {
-	ID    int
-	Name  string
-	Image string
+	ID       int
+	Name     string
+	Image    string
+	UserInfo *UserInfo
 }
 
 type ShowList struct {
@@ -74,16 +76,32 @@ func (h *Handler) Get(id int) (*ShowFull, error) {
 	return sf, nil
 }
 
-func (h *Handler) GetList(listType string) (*ShowList, error) {
+func (h *Handler) GetList(listType string, user *auth.User) (*ShowList, error) {
 	filter, ok := listFilters[listType]
 	if !ok {
 		return nil, fmt.Errorf("Unknown list type: %s", listType)
 	}
 	shows := h.shows
 	showsSimple := make([]*ShowSimple, 0)
+
+	showIDs := make([]int, 0)
+	for _, show := range shows {
+		showIDs = append(showIDs, show.ID)
+	}
+
+	var userInfoList = make(map[int]*UserInfo, 0)
+	fmt.Printf("* GetList(%s, %v)\n", listType, user)
+	if user != nil {
+		GetUserInfo(user.Username, showIDs)
+	}
+
 	for _, show := range shows {
 		if filter(show) {
-			showsSimple = append(showsSimple, showToSimple(show))
+			simpleShow := showToSimple(show)
+			if userInfo, ok := userInfoList[show.ID]; ok {
+				simpleShow.UserInfo = userInfo
+			}
+			showsSimple = append(showsSimple, simpleShow)
 		}
 	}
 	return &ShowList{
@@ -164,12 +182,13 @@ func (h *Handler) RequestShow(u *auth.User, title, wikipedia, trailer, img strin
 	if err != nil {
 		return false, err
 	}
+	defer db.Close()
 
 	if title == "" {
 		return false, fmt.Errorf("No show given")
 	}
 
-	fmt.Printf("Requested: %s, %s, %s, %s", title, wikipedia, trailer, img)
+	fmt.Printf("Requested: %s, %s, %s, %s\n", title, wikipedia, trailer, img)
 	rows, err := db.Query(`SELECT id FROM requests WHERE title=? OR wikipedia=?`, title, wikipedia)
 	if err != nil {
 		return false, fmt.Errorf("Error retrieving currently requested shows: %v", err)
@@ -187,6 +206,100 @@ func (h *Handler) RequestShow(u *auth.User, title, wikipedia, trailer, img strin
 	}
 
 	return true, nil
+}
+
+func (h *Handler) TrackShow(u *auth.User, show_id_str, state string) (bool, error) {
+	db, err := database.Open("tracker")
+	if err != nil {
+		return false, err
+	}
+	defer db.Close()
+
+	if u.Username == "" {
+		return false, fmt.Errorf("User must be logged in")
+	} else if show_id_str == "" {
+		return false, fmt.Errorf("No show id provided")
+	} else if state != "true" && state != "false" {
+		return false, fmt.Errorf("Expected either 'true' or 'false'")
+	}
+
+	show_id, err := strconv.Atoi(show_id_str)
+	if err != nil {
+		return false, fmt.Errorf("Unable to convert show_id to an integer: %v", err)
+	}
+
+	fmt.Printf("TrackShow: %s - %s\n", show_id, state)
+	rows, err := db.Query(`SELECT 1 FROM tracked WHERE user_id=? AND show_id=?`,
+		u.Username, show_id)
+	if err != nil {
+		return false, fmt.Errorf("Error retrieving currently tracked shows: %v", err)
+	}
+
+	var tracked bool = state == "true"
+
+	// If we already have an entry in the database, update it instead.
+	if rows.Next() {
+		fmt.Println("Updating entry...")
+		_, err := db.Exec("UPDATE tracked SET tracked=? WHERE user_id=? AND show_id=?",
+			u.Username, show_id, tracked)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+
+	// Otherwise insert into the table.
+	fmt.Println("Inserting entry...")
+	_, err = db.Exec(`INSERT INTO tracked(user_id, show_id, tracked) VALUES(?, ?, ?)`,
+		u.Username, show_id, tracked)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func GetUserInfo(userID string, showIDs []int) (map[int]*UserInfo, error) {
+	fmt.Printf("Attempting to GetUserInfo(%s, %v)...\n", userID, showIDs)
+	var userInfoList = make(map[int]*UserInfo, 0)
+
+	db, err := database.Open("tracker")
+	if err != nil {
+		return userInfoList, err
+	}
+	defer db.Close()
+
+	// Create a list of ?'s for the SQL search.
+	params := []interface{}{userID}
+	queryRows := ""
+	for i := 0; i < len(showIDs); i++ {
+		if i != 0 {
+			queryRows += ","
+		}
+		queryRows += "?"
+		params = append(params, showIDs[0])
+	}
+
+	// Search for all entries that match the given user_id and any show_id provided.
+	query := fmt.Sprintf("SELECT show_id, tracked FROM tracked WHERE user_id=? AND show_id IN (%s)",
+		queryRows)
+	fmt.Printf("Executing Query: %s\n", query)
+	rows, err := db.Query(query, params...)
+	if err != nil {
+		return userInfoList, err
+	}
+
+	for rows.Next() {
+		userInfo := &UserInfo{}
+		err := userInfo.Scan(rows)
+		if err != nil {
+			return userInfoList, err
+		}
+		userInfoList[userInfo.showID] = userInfo
+		fmt.Printf("] UserInfo: %v\n", userInfo)
+	}
+
+	return userInfoList, nil
 }
 
 // listFilterAll will always return true.

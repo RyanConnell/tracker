@@ -29,6 +29,7 @@ func (a *API) RegisterHandlers(subdomain string) {
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/schedule/{start:[0-9-]+}/{end:[0-9-]+}", subdomain),
 		a.scheduleRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/request/addShow", subdomain), a.addShowRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/track", subdomain), a.trackShow)
 
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
@@ -76,11 +77,19 @@ func (a *API) listRequest(w http.ResponseWriter, r *http.Request) {
 		listType = "all"
 	}
 
-	list, err := a.handler.GetList(listType)
+	user, err := auth.CurrentUser(r)
+	if err != nil {
+		serveRequestResult(false, err, w)
+		return
+	}
+	fmt.Printf("[Backend] [Show] listRequest: CurrentUser=%v\n", user)
+
+	list, err := a.handler.GetList(listType, user)
 	if err != nil {
 		serveError(err, w)
 		return
 	}
+
 	body, err := json.Marshal(list)
 	if err != nil {
 		serveError(err, w)
@@ -111,12 +120,27 @@ func (a *API) addShowRequest(w http.ResponseWriter, r *http.Request) {
 		serveRequestResult(false, err, w)
 		return
 	}
+	fmt.Printf("[Backend] [Show] addShowRequest: CurrentUser=%v\n", user)
 	title := r.FormValue("title")
 	wikipedia := r.FormValue("wikipedia")
 	trailer := r.FormValue("trailer")
 	coverImg := r.FormValue("img")
 
-	success, err := a.handler.RequestShow(&user, title, wikipedia, trailer, coverImg)
+	success, err := a.handler.RequestShow(user, title, wikipedia, trailer, coverImg)
+	serveRequestResult(success, err, w)
+}
+
+func (a *API) trackShow(w http.ResponseWriter, r *http.Request) {
+	user, err := auth.CurrentUser(r)
+	if err != nil {
+		serveRequestResult(false, err, w)
+		return
+	}
+	fmt.Printf("[Backend] [Show] trackShowRequest: CurrentUser=%v\n", user)
+	show_id := r.FormValue("show_id")
+	state := r.FormValue("state")
+
+	success, err := a.handler.TrackShow(user, show_id, state)
 	serveRequestResult(success, err, w)
 }
 
@@ -129,7 +153,11 @@ func serveRequestResult(success bool, err error, w http.ResponseWriter) {
 	result := struct {
 		Success bool
 		Error   string
-	}{success, err.Error()}
+	}{success, ""}
+
+	if err != nil {
+		result.Error = err.Error()
+	}
 
 	body, err := json.Marshal(result)
 	if err != nil {

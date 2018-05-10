@@ -18,19 +18,19 @@ func (u *User) Scan(rows *sql.Rows) error {
 	return rows.Scan(&u.Username, &u.Email)
 }
 
-func CurrentUser(r *http.Request) (User, error) {
-	fmt.Println("Getting current user")
+func CurrentUser(r *http.Request) (*User, error) {
+	fmt.Println("[Auth] Getting current user")
 	session, err := GetSession(r, "tracker")
 	if err != nil {
-		fmt.Printf("CurrentUser: Error: %v\n", err)
+		fmt.Printf("[Auth] CurrentUser: Error: %v\n", err)
 	}
 	id, ok := session.Values["user-id"]
-	fmt.Printf("ID: %v. Ok: %v", id, ok)
+	fmt.Printf("[Auth] CurrentUser: ID (%v), Ok (%v)\n", id, ok)
 	if !ok {
-		return User{}, nil
+		return nil, nil
 	}
 	user, err := LoadUser(id.(string))
-	return *user, err
+	return user, err
 }
 
 func LoadUser(email string) (*User, error) {

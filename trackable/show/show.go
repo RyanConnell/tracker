@@ -30,6 +30,12 @@ type Show struct {
 	ImdbUrl  string `json:"imdb_url"`
 }
 
+// UserInfo contains user level info about a show.
+type UserInfo struct {
+	showID   int  `json:"-"`
+	Tracking bool `json:"tracking"`
+}
+
 type Episode struct {
 	Title       string
 	Season      int
@@ -149,6 +155,10 @@ func ScrapeAll() error {
 	}
 
 	return nil
+}
+
+func (ui *UserInfo) Scan(rows *sql.Rows) error {
+	return rows.Scan(&ui.showID, &ui.Tracking)
 }
 
 func (s *Show) Scan(rows *sql.Rows) error {

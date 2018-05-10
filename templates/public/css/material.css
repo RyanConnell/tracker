@@ -202,6 +202,7 @@ p.day_show_info {
 div.day_show_container {
 	margin: 0;
 	padding: 0;
+	z-index: 1;
 }
 
 div.current div{
@@ -241,7 +242,7 @@ p.show_title {
 	width:200px;
 	font-size: 1.5em;
 	margin-top: 55px;
-	visibility: hidden;
+	visibility: visible;
 }
 
 div.show_title {
@@ -512,4 +513,18 @@ table.centered-form {
 table.centered-form, tr, td{
 	padding-right: 20px;
 	padding-bottom: 5px;
+}
+
+div.toggleTracking {
+	width: 30px;
+	height: 30px;
+	background-color: white;
+	border-radius: 15px;
+	border-color: black;
+	border-width: 2px;
+	border-style:solid;
+	position: absolute;
+	margin-left: 160px;
+	margin-top: 5px;
+	z-index: 1;
 }

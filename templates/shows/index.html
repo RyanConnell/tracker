@@ -1,7 +1,34 @@
 <html>
 <head>
 	<link rel="stylesheet" type="text/css" href="/public/css/material.css" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 	<title>Show Tracker - List</title>
+
+	<script>
+		{{ if .User.Username }}
+			function toggleTracking(show_id) {
+				console.log("Toggle tracking of show " + show_id);
+
+				// Post to /track with show_id, and state
+				$.ajax({
+					url:'/api/show/track',
+					type: 'post',
+					data: {
+						'show_id': show_id,
+						'state': true,
+					},
+					success: function(data) {
+						alert("Response: " + data);
+						console.log(data);
+					},
+					error: function(data) {
+						alert("Error Response: " + data);
+						console.log(data);
+					}
+				});
+			};
+		{{ end }}
+	</script>
 </head>
 
 <body>
@@ -9,9 +36,18 @@
 
 	<div>
 		<div class="show_container">
+
+		{{ $user := .User.Username }}
 			
 		{{ range .Shows }}
 			<div align="center" class="image">
+				{{ if and .UserInfo .UserInfo.Tracking }}
+					<div class="toggleTracking" style="background-color:red"
+						 onclick="toggleTracking({{.ID}});"></div>
+				{{ else }}
+					<div class="toggleTracking" style="background-color:purple"
+						 onclick="toggleTracking({{.ID}});"></div>
+				{{ end }}
 				<a href="{{ .ID }}">
 					<div class="show_title">
 						<p class="show_title">{{ .Name }}</p>
