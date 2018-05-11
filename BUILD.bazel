@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "scraper",
+    srcs = [
+        "main/main.go",
+    ],
+    deps = [
+        "//trackable:show",
+    ],
+)
+
+# TODO: Have the final tracker server also here. This is currently not possible
+#       as it is in server/main, which already belongs to //server. Consider
+#       readjusting the project structure so it can be placed here.
