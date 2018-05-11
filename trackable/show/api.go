@@ -28,7 +28,8 @@ func (a *API) RegisterHandlers(subdomain string) {
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/list/{type:[a-z]*}", subdomain), a.listRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/get/schedule/{start:[0-9-]+}/{end:[0-9-]+}", subdomain),
 		a.scheduleRequest)
-	rtr.HandleFunc(fmt.Sprintf("/%s/request/addShow", subdomain), a.addShowRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/request/add", subdomain), a.addShowRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/request/list", subdomain), a.getRequestedShows)
 
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
@@ -94,6 +95,7 @@ func (a *API) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	schedule, err := a.handler.GetSchedule(params["start"], params["end"])
 	if err != nil {
 		serveError(err, w)
+		return
 	}
 	body, err := json.Marshal(schedule)
 	if err != nil {
@@ -117,6 +119,20 @@ func (a *API) addShowRequest(w http.ResponseWriter, r *http.Request) {
 
 	success, err := a.handler.RequestShow(&user, title, wikipedia, trailer, coverImg)
 	serveRequestResult(success, err, w)
+}
+
+func (a *API) getRequestedShows(w http.ResponseWriter, r *http.Request) {
+	shows, err := a.handler.GetRequestedShows()
+	if err != nil {
+		serveError(err, w)
+		return
+	}
+	body, err := json.Marshal(shows)
+	if err != nil {
+		serveError(err, w)
+	}
+	p := page.Page{body}
+	p.ServePage(w)
 }
 
 func serveError(err error, w http.ResponseWriter) {

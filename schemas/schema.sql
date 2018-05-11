@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS `tracker`.`requests` (
 	trailer VARCHAR(255),
 	cover_image VARCHAR(255),
 	PRIMARY KEY(id)
-)
+);
 
 CREATE DATABASE IF NOT EXISTS `accounts`;
 
@@ -36,5 +36,6 @@ CREATE TABLE IF NOT EXISTS `accounts`.`users` (
 	id INTEGER NOT NULL AUTO_INCREMENT,
 	username VARCHAR(255) NOT NULl,
 	email VARCHAR(255) UNIQUE NOT NULL,
+	admin BOOLEAN DEFAULT FALSE,
 	PRIMARY KEY(id)
 );

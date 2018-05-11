@@ -26,7 +26,12 @@
 				{{ if .User.Username }}	
 					<li style="width:auto">{{ .User.Username }}
 						<ul>
-						<a href="/show/request"><li>Request</li></a>
+						<a href="/show/request"><li>Request Show</li></a>
+						{{ if .User.Admin }}
+							<a href="/show/request/list">
+								<li>Review Requests</li>
+							</a>
+						{{ end }}
 						<a href="/auth/logout"><li>Logout</li></a>
 						</ul>
 					</li>

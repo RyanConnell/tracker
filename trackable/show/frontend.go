@@ -30,6 +30,7 @@ func (f *Frontend) RegisterHandlers(subdomain string) {
 	rtr.HandleFunc(fmt.Sprintf("/%s/schedule", subdomain), f.scheduleRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/{type:[a-z]+}", subdomain), f.listRequest)
 	rtr.HandleFunc(fmt.Sprintf("/%s/{id:[0-9]+}", subdomain), f.detailRequest)
+	rtr.HandleFunc(fmt.Sprintf("/%s/request/list", subdomain), f.requestedShowsRequest)
 
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
@@ -90,7 +91,6 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 		User auth.User
 	}{jsonRep, user}
 
-	fmt.Printf("\tTemplate: User=%v\n", user)
 	err = f.templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		serveError(err, w)
@@ -123,8 +123,6 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 		ShowFull
 		User auth.User
 	}{jsonRep, user}
-
-	fmt.Printf("\tTemplate: User=%v\n", user)
 
 	err = f.templates.ExecuteTemplate(w, "detail.html", data)
 	if err != nil {
@@ -160,8 +158,6 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 		User auth.User
 	}{jsonRep, user}
 
-	fmt.Printf("\tTemplate: User=%v\n", user)
-
 	err = f.templates.ExecuteTemplate(w, "schedule.html", data)
 	if err != nil {
 		serveError(err, w)
@@ -190,6 +186,38 @@ func (f *Frontend) addShowRequest(w http.ResponseWriter, r *http.Request) {
 	}{user}
 
 	err = f.templates.ExecuteTemplate(w, "add_show.html", data)
+	if err != nil {
+		serveError(err, w)
+	}
+}
+
+func (f *Frontend) requestedShowsRequest(w http.ResponseWriter, r *http.Request) {
+	f.Reload()
+
+	user, err := auth.CurrentUser(r)
+	if err != nil {
+		fmt.Printf("Error getting current user: %v\n", err)
+	}
+
+	showRequests := make([]*ShowRequest, 0)
+	if user.Username != "" && user.Admin {
+		apiUrl := fmt.Sprintf("%s/api/show/request/list", f.host.Address())
+		resp, err := http.Get(apiUrl)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		decode := json.NewDecoder(resp.Body)
+		decode.Decode(&showRequests)
+	}
+
+	data := struct {
+		User     auth.User
+		Requests []*ShowRequest
+	}{user, showRequests}
+
+	err = f.templates.ExecuteTemplate(w, "requested_shows.html", data)
 	if err != nil {
 		serveError(err, w)
 	}

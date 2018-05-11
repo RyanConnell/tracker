@@ -45,6 +45,15 @@ type ShowFull struct {
 	NextEpisode       *Episode `json:"next_episode"`
 }
 
+type ShowRequest struct {
+	ID           int
+	Requestee    string
+	ShowName     string
+	WikipediaURL string
+	TrailerURL   string
+	ImageURL     string
+}
+
 type Schedule struct {
 	StartDate common.Date    `json:"start_date"`
 	EndDate   common.Date    `json:"end_date"`
@@ -90,6 +99,28 @@ func (h *Handler) GetList(listType string) (*ShowList, error) {
 		Count: len(showsSimple),
 		Shows: showsSimple,
 	}, nil
+}
+
+func (h *Handler) GetRequestedShows() ([]*ShowRequest, error) {
+	list := make([]*ShowRequest, 0)
+
+	db, err := database.Open("tracker")
+	if err != nil {
+		return list, err
+	}
+
+	rows, err := db.Query(`SELECT id,username,title,wikipedia,trailer,cover_image FROM requests`)
+	if err != nil {
+		return list, fmt.Errorf("Error retrieving currently requested shows: %v", err)
+	}
+	for rows.Next() {
+		req := &ShowRequest{}
+		rows.Scan(&req.ID, &req.Requestee, &req.ShowName, &req.WikipediaURL, &req.TrailerURL,
+			&req.ImageURL)
+		list = append(list, req)
+	}
+
+	return list, nil
 }
 
 func (h *Handler) GetSchedule(start, end string) (*Schedule, error) {

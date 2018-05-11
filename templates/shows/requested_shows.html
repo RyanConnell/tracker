@@ -7,7 +7,7 @@
 	<script>
 		function submitFunc() {
 			$.ajax({
-				url:'/api/show/request/add',
+				url:'/api/show/request/addShow',
 				type: 'post',
 				data: $('#form').serialize(),
 				success: function(data) {
@@ -30,36 +30,37 @@
 	{{ template "navbar" . }}
 
 	<div class="show_container">
-		{{ if .User.Username }}
+		{{ if .User.Admin }}
 			<div class="centered-form">
-				<h3 class="header"><u>Show Request:</u></h3>
-				<i>Fields marked with * are mandatory</i>
+				<table class="centered-form">
+					<tr>
+						<th>Requestee</th>
+						<th>Show Name</th>
+						<th>URLs</th>
+						<th>-</th>
+						<th>-</th>
+					</tr>
 
-				<form id="form", onsubmit="submitFunc(); return false">
-					<table class="centered-form">
-						<tr>
-							<td>Show Name*</td>
-							<td><input type="text" name="title" required></td>
-						</tr>
-						<tr>
-							<td>Wikipedia URL</td>
-							<td><input type="text" name="wikipedia"></td>
-						</tr>
-						<tr>
-							<td>Trailer URL</td>
-							<td><input type="text" name="trailer"></td>
-						</tr>
-						<tr>
-							<td>Image URL</td>
-							<td><input type="text" name="img"></td>
-						</tr>
-					</table>
-					<input type="submit" value="Submit" action="#">
-				</form>
+					<!-- TODO: Better formatting/styling for this page -->
+					<!-- TODO: Add functionality for Accept/Refuse -->
+					<!-- TODO: Add a test crawl function? -->
 
+					{{ range .Requests }}
+						<tr>
+							<td>{{ .Requestee }}</td>
+							<td>{{ .ShowName }}</td>
+							<td>{{ .WikipediaURL }}
+							<br/>{{ .TrailerURL }}
+							<br/>{{ .ImageURL }}</td>
+							<td><input type="submit" value="Accept" action="#"></td>
+							<td><input type="submit" value="Refuse" action="#"></td>
+						</tr>
+					{{ end }}
+
+				</table>
 			</div>
 		{{ else }}
-			You must be logged in to proceed.
+			You must have administritive priviliges to view this content.
 		{{ end }}	
 		<br /><br />
 	</div>

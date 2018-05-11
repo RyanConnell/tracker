@@ -12,24 +12,24 @@ import (
 type User struct {
 	Username string
 	Email    string
+	Admin    bool
 }
 
 func (u *User) Scan(rows *sql.Rows) error {
-	return rows.Scan(&u.Username, &u.Email)
+	return rows.Scan(&u.Username, &u.Email, &u.Admin)
 }
 
 func CurrentUser(r *http.Request) (User, error) {
-	fmt.Println("Getting current user")
 	session, err := GetSession(r, "tracker")
 	if err != nil {
-		fmt.Printf("CurrentUser: Error: %v\n", err)
+		fmt.Printf("[Auth] Error getting session: %v\n", err)
 	}
 	id, ok := session.Values["user-id"]
-	fmt.Printf("ID: %v. Ok: %v", id, ok)
 	if !ok {
 		return User{}, nil
 	}
 	user, err := LoadUser(id.(string))
+	fmt.Printf("[Auth] Current User: %v\n", user)
 	return *user, err
 }
 
@@ -39,7 +39,7 @@ func LoadUser(email string) (*User, error) {
 		return nil, err
 	}
 
-	rows, err := db.Query("SELECT username,email FROM users WHERE email=?", email)
+	rows, err := db.Query("SELECT username,email,admin FROM users WHERE email=?", email)
 	if err != nil {
 		return nil, err
 	}
