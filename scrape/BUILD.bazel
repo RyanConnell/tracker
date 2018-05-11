@@ -1,0 +1,19 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "scrape",
+    srcs = ["scraper.go"],
+    deps = [
+        "@org_golang_x_net//html:go_default_library",
+    ],
+    importpath = "tracker/scrape",
+)
+
+go_test(
+    name = "scrape_test",
+    srcs = ["scraper_test.go"],
+    data = glob(["testdata/**"]),
+    embed = [":scrape"],
+)

@@ -1,0 +1,51 @@
+package(default_visibility = ["//visibility:public"])
+
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "common",
+    srcs = [
+        "common/date.go",
+        "common/host.go",
+        "common/util.go",
+    ],
+    importpath = "tracker/trackable/common",
+)
+
+go_test(
+    name = "common_test",
+    srcs = [
+        "common/date_test.go",
+    ],
+    embed = [":common"],
+)
+
+go_library(
+    name = "music",
+    srcs = [
+        "music/music.go",
+    ],
+    importpath = "tracker/trackable/music",
+)
+
+go_library(
+    name = "show",
+    srcs = [
+        "show/api.go",
+        "show/collector.go",
+        "show/frontend.go",
+        "show/handler.go",
+        "show/show.go",
+    ],
+    deps = [
+        ":common",
+        "//database",
+        "//server:page",
+        "//server:auth",
+        "//scrape",
+        "//templates",
+        "@com_github_gorilla_mux//:go_default_library",
+        "@com_github_go-sql-driver_mysql//:go_default_library",
+    ],
+    importpath = "tracker/trackable/show",
+)
