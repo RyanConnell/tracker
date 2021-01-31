@@ -7,29 +7,27 @@ import (
 )
 
 type WebFrontend interface {
-	Init(*host.Host) error
+	Init(serverHost, apiHost *host.Host) error
 	RegisterHandlers(subdomain string)
 }
 
 type Frontend struct {
-	frontends map[string]WebFrontend
-	host      *host.Host
+	frontends  map[string]WebFrontend
+	serverHost *host.Host
 }
 
 func NewFrontend(frontends map[string]WebFrontend) (*Frontend, error) {
-	settings, err := loadOrCreateSettings()
+	settings, err := NewSettings()
 	if err != nil {
 		return nil, err
 	}
 
-	host := &host.Host{}
-	if err = host.Init(settings, "ip", "port"); err != nil {
-		return nil, err
-	}
+	serverHost := host.NewHost(settings.Hostname, settings.Port)
+	apiHost := host.NewHost(settings.APIHostname, settings.APIPort)
 
 	for subdomain, f := range frontends {
 		f.RegisterHandlers(subdomain)
-		if err = f.Init(host); err != nil {
+		if err = f.Init(serverHost, apiHost); err != nil {
 			return nil, err
 		}
 	}
@@ -41,11 +39,11 @@ func NewFrontend(frontends map[string]WebFrontend) (*Frontend, error) {
 	// Register our landing page.
 	http.HandleFunc("/", landingPage)
 
-	return &Frontend{frontends: frontends, host: host}, nil
+	return &Frontend{frontends: frontends, serverHost: serverHost}, nil
 }
 
 func (f *Frontend) Port() int {
-	return f.host.Port()
+	return f.serverHost.Port()
 }
 
 func landingPage(w http.ResponseWriter, r *http.Request) {

@@ -20,6 +20,7 @@ const DEVMODE = false
 type Frontend struct {
 	name      string
 	host      *host.Host
+	apiHost   *host.Host
 	handler   Handler
 	templates *template.Template
 }
@@ -35,9 +36,10 @@ func (f *Frontend) RegisterHandlers(subdomain string) {
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
-func (f *Frontend) Init(host *host.Host) error {
+func (f *Frontend) Init(serverHost, apiHost *host.Host) error {
 	fmt.Println("Show Frontend Initialised")
-	f.host = host
+	f.host = serverHost
+	f.apiHost = apiHost
 
 	// Define all template functions
 	funcMap := template.FuncMap{
@@ -57,7 +59,7 @@ func (f *Frontend) Init(host *host.Host) error {
 // the templates
 func (f *Frontend) Reload() {
 	if DEVMODE {
-		f.Init(f.host)
+		f.Init(f.host, f.apiHost)
 	}
 }
 
@@ -70,7 +72,7 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 		listType = "all"
 	}
 
-	apiURL := fmt.Sprintf("%s/api/show/get/list/%s", f.host.Address(), listType)
+	apiURL := fmt.Sprintf("%s/api/show/get/list/%s", f.apiHost.Address(), listType)
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		fmt.Println(err)
@@ -104,7 +106,7 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 
-	apiURL := fmt.Sprintf("%s/api/show/get/%s", f.host.Address(), id)
+	apiURL := fmt.Sprintf("%s/api/show/get/%s", f.apiHost.Address(), id)
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		serveError(err, w, r)
@@ -140,7 +142,7 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	startDate := curDate.Minus(7 + curDate.Weekday())
 	endDate := startDate.Plus((7 * 7) - 1)
 
-	apiUrl := fmt.Sprintf("%s/api/show/get/schedule/%s/%s", f.host.Address(), startDate, endDate)
+	apiUrl := fmt.Sprintf("%s/api/show/get/schedule/%s/%s", f.apiHost.Address(), startDate, endDate)
 	resp, err := http.Get(apiUrl)
 	if err != nil {
 		fmt.Println(err)

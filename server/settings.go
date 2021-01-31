@@ -4,16 +4,52 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
 
 var settingsFilePath string = "server.conf"
 
 var defaultSettings map[string]string = map[string]string{
-	"ip":                   "localhost",
+	"hostname":             "localhost",
 	"port":                 "8080",
+	"api_hostname":         "localhost",
+	"api_port":             "8081",
 	"google_client_id":     "GOOGLE_CLIENT_ID",
 	"google_client_secret": "GOOGLE_CLIENT_SECRET",
+}
+
+type Settings struct {
+	Hostname           string
+	Port               int
+	APIHostname        string
+	APIPort            int
+	GoogleClientID     string
+	GoogleClientSecret string
+}
+
+func NewSettings() (*Settings, error) {
+	data, err := loadOrCreateSettings()
+	if err != nil {
+		return nil, err
+	}
+
+	port, err := strconv.Atoi(data["port"])
+	if err != nil {
+		return nil, err
+	}
+	apiPort, err := strconv.Atoi(data["api_port"])
+	if err != nil {
+		return nil, err
+	}
+	return &Settings{
+		Hostname:           data["hostname"],
+		Port:               port,
+		APIHostname:        data["api_hostname"],
+		APIPort:            apiPort,
+		GoogleClientID:     data["google_client_id"],
+		GoogleClientSecret: data["google_client_secret"],
+	}, nil
 }
 
 // Loads the settings if they exist, or creates the defaults if not.
