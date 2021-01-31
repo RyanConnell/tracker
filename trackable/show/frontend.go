@@ -83,7 +83,7 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 
 	user, err := auth.CurrentUser(r)
 	if err != nil {
-		fmt.Println("Error getting current user: %v\n", err)
+		fmt.Printf("Error getting current user: %v\n", err)
 	}
 
 	data := struct {
@@ -117,7 +117,7 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 
 	user, err := auth.CurrentUser(r)
 	if err != nil {
-		fmt.Println("Error getting current user: %v\n", err)
+		fmt.Printf("Error getting current user: %v\n", err)
 	}
 
 	data := struct {
@@ -153,7 +153,7 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 
 	user, err := auth.CurrentUser(r)
 	if err != nil {
-		fmt.Println("Error getting current user: %v\n", err)
+		fmt.Printf("Error getting current user: %v\n", err)
 	}
 
 	data := struct {

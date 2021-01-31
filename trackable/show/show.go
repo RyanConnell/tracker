@@ -49,7 +49,7 @@ func (s *Show) Write() error {
 		 		          VALUES(?, ?, ?, ?, ?)`, s.ID, e.Season, e.Episode, e.Title,
 			e.ReleaseDate.ToTime())
 		if err != nil {
-			fmt.Println("Error with show %d: %v", s.ID, err)
+			fmt.Printf("Error with show %d: %v\n", s.ID, err)
 		}
 	}
 
@@ -62,7 +62,7 @@ func (s *Show) GetEpisodes() ([]*Episode, error) {
 
 func (s *Show) GetMostRecentEpisode() *Episode {
 	now := time.Now()
-	currentDate := &date.Date{now.Day(), int(now.Month()), now.Year()}
+	currentDate := &date.Date{Day: now.Day(), Month: int(now.Month()), Year: now.Year()}
 	var lastEpisode *Episode = nil
 	for _, episode := range s.Episodes {
 		if episode.ReleaseDate.CompareTo(currentDate) == 1 {
@@ -75,7 +75,7 @@ func (s *Show) GetMostRecentEpisode() *Episode {
 
 func (s *Show) GetNextEpisode() *Episode {
 	now := time.Now()
-	currentDate := &date.Date{now.Day(), int(now.Month()), now.Year()}
+	currentDate := &date.Date{Day: now.Day(), Month: int(now.Month()), Year: now.Year()}
 	for _, episode := range s.Episodes {
 		if episode.ReleaseDate.CompareTo(currentDate) == 1 {
 			return episode

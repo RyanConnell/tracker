@@ -182,6 +182,6 @@ func gatherUserInfo(client *http.Client) (*GoogleUserInfo, error) {
 }
 
 func serveError(err error, w http.ResponseWriter) {
-	p := page.Page{[]byte(fmt.Sprintf("Error occured: %v", err.Error()))}
+	p := page.Page{Body: []byte(fmt.Sprintf("Error occured: %v", err.Error()))}
 	p.ServePage(w)
 }
