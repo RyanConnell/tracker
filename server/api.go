@@ -3,17 +3,17 @@ package server
 import (
 	"fmt"
 
-	"tracker/trackable/common"
+	"tracker/server/host"
 )
 
 type API interface {
-	Init(*common.Host) error
+	Init(*host.Host) error
 	RegisterHandlers(subdomain string)
 }
 
 type Backend struct {
 	apis map[string]API
-	host *common.Host
+	host *host.Host
 }
 
 func NewBackend(apis map[string]API) (*Backend, error) {
@@ -22,8 +22,8 @@ func NewBackend(apis map[string]API) (*Backend, error) {
 		return nil, err
 	}
 
-	host := &common.Host{}
-	if err = host.Init(settings); err != nil {
+	host := &host.Host{}
+	if err = host.Init(settings, "ip", "port"); err != nil {
 		return nil, err
 	}
 

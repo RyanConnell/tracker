@@ -3,17 +3,17 @@ package server
 import (
 	"net/http"
 
-	"tracker/trackable/common"
+	"tracker/server/host"
 )
 
 type WebFrontend interface {
-	Init(*common.Host) error
+	Init(*host.Host) error
 	RegisterHandlers(subdomain string)
 }
 
 type Frontend struct {
 	frontends map[string]WebFrontend
-	host      *common.Host
+	host      *host.Host
 }
 
 func NewFrontend(frontends map[string]WebFrontend) (*Frontend, error) {
@@ -22,8 +22,8 @@ func NewFrontend(frontends map[string]WebFrontend) (*Frontend, error) {
 		return nil, err
 	}
 
-	host := &common.Host{}
-	if err = host.Init(settings); err != nil {
+	host := &host.Host{}
+	if err = host.Init(settings, "ip", "port"); err != nil {
 		return nil, err
 	}
 

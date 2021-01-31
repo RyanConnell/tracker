@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"tracker/server/host"
 	"tracker/server/page"
-	"tracker/trackable/common"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -29,13 +29,13 @@ type GoogleUserInfo struct {
 }
 
 type API struct {
-	host *common.Host
+	host *host.Host
 	conf *oauth2.Config
 }
 
 var api *API
 
-func (a *API) Init(host *common.Host, authConfig map[string]string) error {
+func (a *API) Init(host *host.Host, authConfig map[string]string) error {
 	api = a
 	a.host = host
 

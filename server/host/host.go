@@ -1,4 +1,4 @@
-package common
+package host
 
 import (
 	"fmt"
@@ -11,18 +11,18 @@ type Host struct {
 	settings map[string]string
 }
 
-func (h *Host) Init(settings map[string]string) error {
+func (h *Host) Init(settings map[string]string, ipKey, portKey string) error {
 	var ok bool
-	if h.ip, ok = settings["ip"]; !ok {
-		fmt.Println("Host IP not set - Defaulting to 'localhost'")
+	if h.ip, ok = settings[ipKey]; !ok {
+		fmt.Printf("%q not set - Defaulting to 'localhost'\n", ipKey)
 		h.ip = "localhost"
-		settings["ip"] = "localhost"
+		settings[ipKey] = "localhost"
 	}
 
-	if portStr, ok := settings["port"]; !ok {
-		fmt.Println("Host Port not set - Defaulting to 8080")
+	if portStr, ok := settings[portKey]; !ok {
+		fmt.Printf("%q not set - Defaulting to 8080\n", portKey)
 		h.port = 8080
-		settings["port"] = "8080"
+		settings[portKey] = "8080"
 	} else {
 		var err error
 		if h.port, err = strconv.Atoi(portStr); err != nil {

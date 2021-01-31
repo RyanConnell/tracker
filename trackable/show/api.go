@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"tracker/server/host"
 	"tracker/server/page"
-	"tracker/trackable/common"
 
 	"github.com/gorilla/mux"
 )
@@ -16,7 +16,7 @@ import (
 type API struct {
 	name    string
 	handler Handler
-	host    *common.Host
+	host    *host.Host
 }
 
 func (a *API) RegisterHandlers(subdomain string) {
@@ -31,7 +31,7 @@ func (a *API) RegisterHandlers(subdomain string) {
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
-func (a *API) Init(*common.Host) error {
+func (a *API) Init(*host.Host) error {
 	fmt.Println("Show APi Initialised")
 	a.handler.Init()
 	return nil

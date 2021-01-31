@@ -8,8 +8,8 @@ import (
 
 	"tracker/date"
 	"tracker/server/auth"
+	"tracker/server/host"
 	"tracker/templates"
-	"tracker/trackable/common"
 
 	"github.com/gorilla/mux"
 )
@@ -19,7 +19,7 @@ const DEVMODE = false
 // Frontend implemnts server.Frontend
 type Frontend struct {
 	name      string
-	host      *common.Host
+	host      *host.Host
 	handler   Handler
 	templates *template.Template
 }
@@ -35,7 +35,7 @@ func (f *Frontend) RegisterHandlers(subdomain string) {
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
-func (f *Frontend) Init(host *common.Host) error {
+func (f *Frontend) Init(host *host.Host) error {
 	fmt.Println("Show Frontend Initialised")
 	f.host = host
 
