@@ -22,7 +22,17 @@ type Frontend interface {
 	Init(host *common.Host) error
 }
 
-func Launch(host *common.Host, settings map[string]string) {
+func Launch() error {
+	settings, err := loadOrCreateSettings()
+	if err != nil {
+		return err
+	}
+
+	host := &common.Host{}
+	if err = host.Init(settings); err != nil {
+		return err
+	}
+
 	fmt.Printf("Starting server on %s\n", host.Address())
 
 	// Register the Show API.
@@ -56,8 +66,8 @@ func Launch(host *common.Host, settings map[string]string) {
 	fmt.Printf("%d frontends registered\n", len(frontends))
 	fmt.Printf("%d apis registered\n", len(apis))
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", host.Port()), nil)
-	fmt.Printf("Error encountered; %v", err)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", host.Port()), nil)
+	return err
 }
 
 func landingPage(w http.ResponseWriter, r *http.Request) {
