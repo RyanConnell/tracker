@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"tracker/database"
-	"tracker/trackable/common"
+	"tracker/date"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -34,7 +34,7 @@ type Episode struct {
 	Title       string
 	Season      int
 	Episode     int
-	ReleaseDate *common.Date
+	ReleaseDate *date.Date
 }
 
 func (s *Show) Write() error {
@@ -62,7 +62,7 @@ func (s *Show) GetEpisodes() ([]*Episode, error) {
 
 func (s *Show) GetMostRecentEpisode() *Episode {
 	now := time.Now()
-	currentDate := &common.Date{now.Day(), int(now.Month()), now.Year()}
+	currentDate := &date.Date{now.Day(), int(now.Month()), now.Year()}
 	var lastEpisode *Episode = nil
 	for _, episode := range s.Episodes {
 		if episode.ReleaseDate.CompareTo(currentDate) == 1 {
@@ -75,7 +75,7 @@ func (s *Show) GetMostRecentEpisode() *Episode {
 
 func (s *Show) GetNextEpisode() *Episode {
 	now := time.Now()
-	currentDate := &common.Date{now.Day(), int(now.Month()), now.Year()}
+	currentDate := &date.Date{now.Day(), int(now.Month()), now.Year()}
 	for _, episode := range s.Episodes {
 		if episode.ReleaseDate.CompareTo(currentDate) == 1 {
 			return episode
@@ -93,7 +93,7 @@ func (s *Show) EpisodesBefore(episode *Episode) int {
 	return 0
 }
 
-func (s *Show) EpisodesInRange(startDate, endDate *common.Date) []*Episode {
+func (s *Show) EpisodesInRange(startDate, endDate *date.Date) []*Episode {
 	start := sort.Search(len(s.Episodes), func(i int) bool {
 		return s.Episodes[i].ReleaseDate.CompareTo(startDate) == 1
 	})
@@ -157,7 +157,7 @@ func (s *Show) Scan(rows *sql.Rows) error {
 }
 
 func (e *Episode) Scan(rows *sql.Rows) error {
-	var date common.NullDate
+	var date date.NullDate
 	err := rows.Scan(&e.Title, &e.Season, &e.Episode, &date)
 	if err != nil {
 		return fmt.Errorf("Unable to scan episode: %v", err)

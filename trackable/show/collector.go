@@ -2,8 +2,10 @@ package show
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"tracker/date"
 	"tracker/scrape"
 	"tracker/trackable/common"
 )
@@ -61,7 +63,7 @@ func (s *Show) scrapeEpisodes(url string) error {
 	}
 
 	seasonNum := 1
-	var previousDate *common.Date = &common.Date{}
+	var previousDate *date.Date = &date.Date{}
 	tables := scraper.FindAll("table", attr{"class": "wikiepisodetable"})
 	for _, table := range tables {
 		if !table.Valid {
@@ -104,7 +106,7 @@ func (s *Show) parseInfobox(infobox *scrape.Tag) error {
 	return nil
 }
 
-func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *common.Date) error {
+func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *date.Date) error {
 	rows := table.FindAll("tr", nil)
 	for _, row := range rows {
 		if !row.Valid {
@@ -117,9 +119,9 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *co
 		}
 
 		episodeNumStr := common.ParseString(columns[0].Text())
-		episodeNum, err := common.StringToInt(episodeNumStr)
+		episodeNum, err := strconv.Atoi(episodeNumStr)
 		if err != nil {
-			fmt.Errorf("Unable to convert %s to an integer: %v", episodeNumStr, err)
+			return fmt.Errorf("Unable to convert %s to an integer: %v", episodeNumStr, err)
 		}
 
 		episode := &Episode{
@@ -141,8 +143,8 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *co
 
 			// Get release date
 			text := common.ParseString(column.Text())
-			if common.IsDate(text) {
-				episode.ReleaseDate, err = common.ToDate(text)
+			if date.IsDate(text) {
+				episode.ReleaseDate, err = date.ToDate(text)
 				if err != nil {
 					fmt.Printf("Unable to convert %s to a date object: %v\n", text, err)
 				}

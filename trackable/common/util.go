@@ -3,7 +3,6 @@ package common
 import (
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -20,10 +19,6 @@ func GetBytes(url string) ([]byte, error) {
 	}
 
 	return bytes, nil
-}
-
-func StringToInt(str string) (int, error) {
-	return strconv.Atoi(str)
 }
 
 func ParseString(str string) string {

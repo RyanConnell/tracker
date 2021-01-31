@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 
+	"tracker/date"
 	"tracker/server/auth"
 	"tracker/templates"
 	"tracker/trackable/common"
@@ -135,7 +136,7 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	f.Reload()
 
-	curDate := common.CurrentDate()
+	curDate := date.CurrentDate()
 	startDate := curDate.Minus(7 + curDate.Weekday())
 	endDate := startDate.Plus((7 * 7) - 1)
 

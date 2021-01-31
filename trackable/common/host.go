@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Host struct {
@@ -24,7 +25,7 @@ func (h *Host) Init(settings map[string]string) error {
 		settings["port"] = "8080"
 	} else {
 		var err error
-		if h.port, err = StringToInt(portStr); err != nil {
+		if h.port, err = strconv.Atoi(portStr); err != nil {
 			return fmt.Errorf("Unable to parse port: %v", portStr)
 		}
 	}
