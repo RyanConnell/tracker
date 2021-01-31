@@ -2,12 +2,13 @@ package show
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"tracker/date"
 	"tracker/scrape"
-	"tracker/trackable/common"
 )
 
 type attr = map[string]string
@@ -22,7 +23,7 @@ func Collect() error {
 }
 
 func (s *Show) scrape(url string) error {
-	body, err := common.GetBytes(url)
+	body, err := getBytes(url)
 	if err != nil {
 		return err
 	}
@@ -52,7 +53,7 @@ func (s *Show) scrape(url string) error {
 }
 
 func (s *Show) scrapeEpisodes(url string) error {
-	body, err := common.GetBytes(url)
+	body, err := getBytes(url)
 	if err != nil {
 		return err
 	}
@@ -118,7 +119,7 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *da
 			continue
 		}
 
-		episodeNumStr := common.ParseString(columns[0].Text())
+		episodeNumStr := parseString(columns[0].Text())
 		episodeNum, err := strconv.Atoi(episodeNumStr)
 		if err != nil {
 			return fmt.Errorf("Unable to convert %s to an integer: %v", episodeNumStr, err)
@@ -137,12 +138,12 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *da
 			// Get title
 			class, ok := column.GetAttr("class")
 			if ok && strings.Contains(class, "summary") {
-				episode.Title = common.ParseString(column.Text())
+				episode.Title = parseString(column.Text())
 				continue
 			}
 
 			// Get release date
-			text := common.ParseString(column.Text())
+			text := parseString(column.Text())
 			if date.IsDate(text) {
 				episode.ReleaseDate, err = date.ToDate(text)
 				if err != nil {
@@ -163,4 +164,30 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *da
 		s.Episodes = append(s.Episodes, episode)
 	}
 	return nil
+}
+
+func getBytes(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert reader to bytes
+	bytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+func parseString(str string) string {
+	str = strings.Trim(str, "\n")
+	str = strings.Trim(str, "\r")
+	str = strings.Trim(str, "\t")
+	str = strings.Trim(str, " ")
+	str = strings.Replace(str, "  ", " ", 100)
+	str = strings.Replace(str, "\t\t", "\t", 100)
+	str = strings.Replace(str, "\n", "", 100)
+	return str
 }
