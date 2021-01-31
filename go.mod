@@ -1,5 +1,7 @@
 module tracker
 
+go 1.15
+
 require (
 	cloud.google.com/go v0.27.0 // indirect
 	github.com/go-sql-driver/mysql v1.4.0
