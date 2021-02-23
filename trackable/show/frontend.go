@@ -6,9 +6,10 @@ import (
 	"html/template"
 	"net/http"
 
+	"tracker/date"
 	"tracker/server/auth"
+	"tracker/server/host"
 	"tracker/templates"
-	"tracker/trackable/common"
 
 	"github.com/gorilla/mux"
 )
@@ -18,7 +19,8 @@ const DEVMODE = false
 // Frontend implemnts server.Frontend
 type Frontend struct {
 	name      string
-	host      *common.Host
+	host      *host.Host
+	apiHost   *host.Host
 	handler   Handler
 	templates *template.Template
 }
@@ -34,9 +36,10 @@ func (f *Frontend) RegisterHandlers(subdomain string) {
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
-func (f *Frontend) Init(host *common.Host) error {
+func (f *Frontend) Init(serverHost, apiHost *host.Host) error {
 	fmt.Println("Show Frontend Initialised")
-	f.host = host
+	f.host = serverHost
+	f.apiHost = apiHost
 
 	// Define all template functions
 	funcMap := template.FuncMap{
@@ -56,7 +59,7 @@ func (f *Frontend) Init(host *common.Host) error {
 // the templates
 func (f *Frontend) Reload() {
 	if DEVMODE {
-		f.Init(f.host)
+		f.Init(f.host, f.apiHost)
 	}
 }
 
@@ -69,7 +72,7 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 		listType = "all"
 	}
 
-	apiURL := fmt.Sprintf("%s/api/show/get/list/%s", f.host.Address(), listType)
+	apiURL := fmt.Sprintf("%s/api/show/get/list/%s", f.apiHost.Address(), listType)
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		fmt.Println(err)
@@ -82,7 +85,7 @@ func (f *Frontend) listRequest(w http.ResponseWriter, r *http.Request) {
 
 	user, err := auth.CurrentUser(r)
 	if err != nil {
-		fmt.Println("Error getting current user: %v\n", err)
+		fmt.Printf("Error getting current user: %v\n", err)
 	}
 
 	data := struct {
@@ -103,7 +106,7 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 
-	apiURL := fmt.Sprintf("%s/api/show/get/%s", f.host.Address(), id)
+	apiURL := fmt.Sprintf("%s/api/show/get/%s", f.apiHost.Address(), id)
 	resp, err := http.Get(apiURL)
 	if err != nil {
 		serveError(err, w, r)
@@ -116,7 +119,7 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 
 	user, err := auth.CurrentUser(r)
 	if err != nil {
-		fmt.Println("Error getting current user: %v\n", err)
+		fmt.Printf("Error getting current user: %v\n", err)
 	}
 
 	data := struct {
@@ -135,11 +138,11 @@ func (f *Frontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	f.Reload()
 
-	curDate := common.CurrentDate()
+	curDate := date.CurrentDate()
 	startDate := curDate.Minus(7 + curDate.Weekday())
 	endDate := startDate.Plus((7 * 7) - 1)
 
-	apiUrl := fmt.Sprintf("%s/api/show/get/schedule/%s/%s", f.host.Address(), startDate, endDate)
+	apiUrl := fmt.Sprintf("%s/api/show/get/schedule/%s/%s", f.apiHost.Address(), startDate, endDate)
 	resp, err := http.Get(apiUrl)
 	if err != nil {
 		fmt.Println(err)
@@ -152,7 +155,7 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 
 	user, err := auth.CurrentUser(r)
 	if err != nil {
-		fmt.Println("Error getting current user: %v\n", err)
+		fmt.Printf("Error getting current user: %v\n", err)
 	}
 
 	data := struct {

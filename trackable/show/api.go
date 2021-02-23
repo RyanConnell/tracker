@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"tracker/server/host"
 	"tracker/server/page"
-	"tracker/trackable/common"
 
 	"github.com/gorilla/mux"
 )
@@ -16,7 +16,7 @@ import (
 type API struct {
 	name    string
 	handler Handler
-	host    *common.Host
+	host    *host.Host
 }
 
 func (a *API) RegisterHandlers(subdomain string) {
@@ -31,14 +31,14 @@ func (a *API) RegisterHandlers(subdomain string) {
 	http.Handle(fmt.Sprintf("/%s/", subdomain), rtr)
 }
 
-func (a *API) Init(*common.Host) error {
+func (a *API) Init(*host.Host) error {
 	fmt.Println("Show APi Initialised")
 	a.handler.Init()
 	return nil
 }
 
 func (a *API) defaultRequest(w http.ResponseWriter, r *http.Request) {
-	p := page.Page{[]byte("Show API landing page - Perhaps serve a README here?")}
+	p := page.Page{Body: []byte("Show API landing page - Perhaps serve a README here?")}
 	p.ServePage(w)
 }
 
@@ -61,7 +61,7 @@ func (a *API) getRequest(w http.ResponseWriter, r *http.Request) {
 		serveError(err, w, r)
 		return
 	}
-	p := page.Page{body}
+	p := page.Page{Body: body}
 	p.ServePage(w)
 }
 
@@ -83,7 +83,7 @@ func (a *API) listRequest(w http.ResponseWriter, r *http.Request) {
 		serveError(err, w, r)
 		return
 	}
-	p := page.Page{body}
+	p := page.Page{Body: body}
 	p.ServePage(w)
 }
 
@@ -98,11 +98,11 @@ func (a *API) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 		serveError(err, w, r)
 		return
 	}
-	p := page.Page{body}
+	p := page.Page{Body: body}
 	p.ServePage(w)
 }
 
 func serveError(err error, w http.ResponseWriter, r *http.Request) {
-	p := page.Page{[]byte(fmt.Sprintf("Error occured: %v", err.Error()))}
+	p := page.Page{Body: []byte(fmt.Sprintf("Error occured: %v", err.Error()))}
 	p.ServePage(w)
 }

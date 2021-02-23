@@ -3,7 +3,7 @@ package show
 import (
 	"fmt"
 
-	"tracker/trackable/common"
+	"tracker/date"
 )
 
 // Handler will take care of database loading and API prepping for Shows.
@@ -44,20 +44,20 @@ type ShowFull struct {
 }
 
 type Schedule struct {
-	StartDate common.Date    `json:"start_date"`
-	EndDate   common.Date    `json:"end_date"`
+	StartDate date.Date      `json:"start_date"`
+	EndDate   date.Date      `json:"end_date"`
 	Items     []ScheduleItem `json:"items"`
 }
 
 type ScheduleItem struct {
-	Date     *common.Date     `json:"date"`
+	Date     *date.Date       `json:"date"`
 	Episodes []*CalendarEntry `json:"episodes"`
 }
 
-var listFilters = map[string]func(*Show)bool{
-	"all": listFilterAll,
-	"airing": listFilterAiring,
-	"upcoming": listFilterUpcoming,
+var listFilters = map[string]func(*Show) bool{
+	"all":        listFilterAll,
+	"airing":     listFilterAiring,
+	"upcoming":   listFilterUpcoming,
 	"unreleased": listFilterUnreleased,
 }
 
@@ -91,12 +91,12 @@ func (h *Handler) GetList(listType string) (*ShowList, error) {
 }
 
 func (h *Handler) GetSchedule(start, end string) (*Schedule, error) {
-	startDate, err := common.DateFromStr(start)
+	startDate, err := date.DateFromStr(start)
 	if err != nil {
 		return nil, err
 	}
 
-	endDate, err := common.DateFromStr(end)
+	endDate, err := date.DateFromStr(end)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (h *Handler) GetSchedule(start, end string) (*Schedule, error) {
 	schedule := &Schedule{}
 	schedule.StartDate = startDate
 	schedule.EndDate = endDate
-	dateRange, err := common.DatesInRange(startDate, endDate)
+	dateRange, err := date.DatesInRange(startDate, endDate)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create Date range: %v", err)
 	}
@@ -130,8 +130,8 @@ type CalendarEntry struct {
 	*Episode
 }
 
-func (h *Handler) episodesInRange(dateRange []*common.Date) map[common.Date][]*CalendarEntry {
-	episodeMap := map[common.Date][]*CalendarEntry{}
+func (h *Handler) episodesInRange(dateRange []*date.Date) map[date.Date][]*CalendarEntry {
+	episodeMap := map[date.Date][]*CalendarEntry{}
 	if len(dateRange) == 0 {
 		return episodeMap
 	}
@@ -164,7 +164,7 @@ func listFilterAll(show *Show) bool {
 
 // listFilterAiring will return true for all shows that have aired in the last 30 days.
 func listFilterAiring(show *Show) bool {
-	lastMonth := common.CurrentDate().Minus(30)
+	lastMonth := date.CurrentDate().Minus(30)
 	if mostRecentEpisode := show.GetMostRecentEpisode(); mostRecentEpisode != nil {
 		return mostRecentEpisode.ReleaseDate.CompareTo(lastMonth) == 1
 	}

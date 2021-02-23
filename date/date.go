@@ -1,9 +1,10 @@
-package common
+package date
 
 import (
 	"database/sql/driver"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -168,13 +169,13 @@ func (nd NullDate) Value() (driver.Value, error) {
 func (nd *NullDate) FromStr(str string) error {
 	values := strings.Split(str, "-")
 	var err error
-	if nd.Date.Year, err = StringToInt(values[0]); err != nil {
+	if nd.Date.Year, err = strconv.Atoi(values[0]); err != nil {
 		return err
 	}
-	if nd.Date.Month, err = StringToInt(values[1]); err != nil {
+	if nd.Date.Month, err = strconv.Atoi(values[1]); err != nil {
 		return err
 	}
-	if nd.Date.Day, err = StringToInt(values[2]); err != nil {
+	if nd.Date.Day, err = strconv.Atoi(values[2]); err != nil {
 		return err
 	}
 	nd.Valid = nd.isValid()
@@ -206,13 +207,13 @@ func ToDate(str string) (*Date, error) {
 	regex, err := regexp.Compile(`([a-zA-Z]+)[^0-9]+([0-9]+)[^0-9]+([0-9]+)`)
 	matches := regex.FindStringSubmatch(str)
 	if len(matches) >= 3 {
-		if date.Day, err = StringToInt(matches[2]); err != nil {
+		if date.Day, err = strconv.Atoi(matches[2]); err != nil {
 			return nil, err
 		}
 		if date.Month = matchMonth(matches[1]); date.Month == 0 {
 			return nil, fmt.Errorf("Invalid month: %s", matches[1])
 		}
-		if date.Year, err = StringToInt(matches[3]); err != nil {
+		if date.Year, err = strconv.Atoi(matches[3]); err != nil {
 			return nil, err
 		}
 	} else {
