@@ -21,7 +21,12 @@ func run() error {
 		"api/show": &show.API{},
 	}
 
-	backend, err := server.NewBackend(apis)
+	settings, err := server.NewSettings()
+	if err != nil {
+		return fmt.Errorf("unable to parse settings: %w", err)
+	}
+
+	backend, err := server.NewBackend(settings, apis)
 	if err != nil {
 		return fmt.Errorf("unable to initialize backend server: %w", err)
 	}

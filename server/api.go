@@ -16,17 +16,12 @@ type Backend struct {
 	host *host.Host
 }
 
-func NewBackend(apis map[string]API) (*Backend, error) {
-	settings, err := NewSettings()
-	if err != nil {
-		return nil, err
-	}
-
+func NewBackend(settings *Settings, apis map[string]API) (*Backend, error) {
 	host := host.NewHost(settings.Hostname, settings.Port)
 	for subdomain, api := range apis {
 		fmt.Printf("Registering api handler for %q\n", subdomain)
 		api.RegisterHandlers(subdomain)
-		if err = api.Init(host); err != nil {
+		if err := api.Init(host); err != nil {
 			return nil, err
 		}
 	}
