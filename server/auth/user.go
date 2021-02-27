@@ -2,19 +2,47 @@ package auth
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
 	"tracker/database"
 )
 
+var (
+	ErrUserNotFound = errors.New("auth: user not found")
+)
+
+func init() {
+	db, err := database.Open("accounts")
+	if err != nil {
+		log.Fatalf("unable to open database for authentication: %v", err)
+	}
+
+	loadUserStmt, err = db.Prepare("SELECT username,email FROM users WHERE email=?")
+	if err != nil {
+		log.Fatalf("unable to prepare loading users: %v", err)
+	}
+
+	createUserStmt, err = db.Prepare("INSERT INTO users(username, email) VALUES(?, ?)")
+	if err != nil {
+		log.Fatalf("unable to prepare creating users: %v", err)
+	}
+}
+
+// TODO: Convert from functions to a struct and move this global variable
+//       into the new struct
+var loadUserStmt *sql.Stmt
+var createUserStmt *sql.Stmt
+
 type User struct {
 	Username string
 	Email    string
 }
 
-func (u *User) Scan(rows *sql.Rows) error {
+func (u *User) Scan(rows *sql.Row) error {
 	return rows.Scan(&u.Username, &u.Email)
 }
 
@@ -34,38 +62,20 @@ func CurrentUser(r *http.Request) (User, error) {
 }
 
 func LoadUser(email string) (*User, error) {
-	db, err := database.Open("accounts")
-	if err != nil {
-		return nil, err
+	user := new(User)
+	switch err := loadUserStmt.QueryRow(email).Scan(user); err {
+	case sql.ErrNoRows:
+		return nil, ErrUserNotFound
+	case nil:
+		return user, nil
+	default:
+		return nil, fmt.Errorf("unknown error when getting user: %w", err)
 	}
-
-	rows, err := db.Query("SELECT username,email FROM users WHERE email=?", email)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		user := &User{}
-		err = user.Scan(rows)
-		if err != nil {
-			return nil, err
-		}
-		return user, err
-	}
-
-	return nil, nil
 }
 
 func CreateUser(userinfo *GoogleUserInfo) (*User, error) {
-	db, err := database.Open("accounts")
-	if err != nil {
-		return nil, err
-	}
-
 	username := strings.Split(userinfo.Email, "@")[0]
-	_, err = db.Exec(`INSERT INTO users(username, email) VALUES(?, ?)`, username, userinfo.Email)
-	if err != nil {
+	if _, err := createUserStmt.Exec(username, userinfo.Email); err != nil {
 		return nil, err
 	}
 	return LoadUser(userinfo.Email)
