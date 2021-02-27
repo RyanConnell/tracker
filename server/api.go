@@ -22,7 +22,7 @@ func NewBackend(apis map[string]API) (*Backend, error) {
 		return nil, err
 	}
 
-	host := host.NewHost(settings.Hostname, settings.Port)
+	host := host.NewHost(settings.Hostname, settings.APIPort)
 	for subdomain, api := range apis {
 		fmt.Printf("Registering api handler for %q\n", subdomain)
 		api.RegisterHandlers(subdomain)

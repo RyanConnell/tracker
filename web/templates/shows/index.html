@@ -1,0 +1,24 @@
+{{ template "header.html" . }}
+
+<div class="show_container">
+	{{ range .Shows }}
+	<div align="center" class="image">
+		<a href="{{ .ID }}">
+			<div class="show_title">
+				<p class="show_title">{{ .Name }}</p>
+			</div>
+			<img class="cover" src="/public/images/{{.Name}}.jpg"></img>
+		</a>
+		<div class="details">
+			<p class="details-title">{{ .Name }}</p>
+		</div>
+	</div>
+	{{ else }}
+	<div align="center">
+		<p>Sorry,<br/>No shows found in this category</p>
+	</div>
+	<br />
+	{{ end }}
+</div>
+
+{{ template "footer.html" . }}

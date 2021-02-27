@@ -1,0 +1,11 @@
+{{ template "header.html" . }}
+
+<div class="show_container">
+	{{ if .User.Username }}
+		Feature not yet ready.
+	{{ else }}
+		You must be logged in to proceed.
+	{{ end }}
+</div>
+
+{{ template "footer.html" . }}
