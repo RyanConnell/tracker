@@ -17,18 +17,13 @@ type Frontend struct {
 	serverHost *host.Host
 }
 
-func NewFrontend(frontends map[string]WebFrontend) (*Frontend, error) {
-	settings, err := NewSettings()
-	if err != nil {
-		return nil, err
-	}
-
+func NewFrontend(settings *Settings, frontends map[string]WebFrontend) (*Frontend, error) {
 	serverHost := host.NewHost(settings.Hostname, settings.Port)
 	apiHost := host.NewHost(settings.APIHostname, settings.APIPort)
 
 	for subdomain, f := range frontends {
 		f.RegisterHandlers(subdomain)
-		if err = f.Init(serverHost, apiHost); err != nil {
+		if err := f.Init(serverHost, apiHost); err != nil {
 			return nil, err
 		}
 	}

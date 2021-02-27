@@ -185,7 +185,7 @@ func (f *Frontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Error getting current user: %v\n", err)
 	}
 
-	data := SheduleRequestData{
+	data := ScheduleRequestData{
 		Title:    "Show Tracker - Schedule",
 		Schedule: schedule,
 		User:     user,
