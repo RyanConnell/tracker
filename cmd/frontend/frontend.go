@@ -21,7 +21,12 @@ func run() error {
 		"show": &show.Frontend{},
 	}
 
-	frontend, err := server.NewFrontend(apis)
+	settings, err := server.NewSettings()
+	if err != nil {
+		return fmt.Errorf("unable to parse settings: %w", err)
+	}
+
+	frontend, err := server.NewFrontend(settings, apis)
 	if err != nil {
 		return fmt.Errorf("unable to create a new frontend: %w", err)
 	}
