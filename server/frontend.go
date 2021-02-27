@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"tracker/server/host"
+	"tracker/web"
 )
 
 type WebFrontend interface {
@@ -27,9 +28,7 @@ func NewFrontend(settings *Settings, frontends map[string]WebFrontend) (*Fronten
 		}
 	}
 
-	// Register public files such as CSS, JS, and Images.
-	http.Handle("/public/", http.StripPrefix("/public/",
-		http.FileServer(http.Dir("templates/public"))))
+	http.Handle("/public/", http.FileServer(http.FS(web.Static)))
 
 	// Register our landing page.
 	http.HandleFunc("/", landingPage)

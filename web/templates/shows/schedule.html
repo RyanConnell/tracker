@@ -1,0 +1,36 @@
+{{ template "header.html" . }}
+
+<div class='show_container'>
+	{{ range $index, $item := .Items }}
+		{{ if eq (mod $index 7) (0) }}
+			<div class="day_container">
+			<div class="calendar_content">
+		{{ end }}
+		<div class="day">
+			<p class="day_title"><b>{{.Date.CalendarString }}</b></p>
+			<div class="day_episode_wrapper">
+				<div class="day_show_container">
+					{{ if not .Episodes }}
+						<p class="day_show_none"></p>
+					{{ else }}
+						{{ range .Episodes }}
+							<p class="day_show_info border">
+								<a href="{{ .ShowID }}">
+									{{ .ShowName }}
+									<font size="1">
+										[S{{doubleDigits .Season}}E{{doubleDigits .Episode.Episode}}]
+									</font>
+								</a>
+							</p>
+						{{ end }}
+					{{ end }}
+				</div>
+			</div>
+		</div>
+		{{ if eq (mod $index 7) (6) }}
+			</div>
+		{{ end }}
+	{{ end }}
+</div>
+
+{{ template "footer.html" . }}
