@@ -9,11 +9,16 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+	"time"
 
+<<<<<<< HEAD:internal/frontend/show.go
 	"github.com/gorilla/mux"
 
 	"tracker/date"
 	"tracker/internal/httpserver"
+=======
+	"tracker/internal/timeutil"
+>>>>>>> 10cd72e... Remove data package:trackable/show/frontend.go
 	"tracker/server/auth"
 	"tracker/trackable/show"
 	"tracker/web"
@@ -156,11 +161,22 @@ type ScheduleRequestData struct {
 }
 
 func (f *ShowFrontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
-	curDate := date.CurrentDate()
-	startDate := curDate.Minus(7 + curDate.Weekday())
-	endDate := startDate.Plus((7 * 7) - 1)
+	f.Reload()
 
-	u := fmt.Sprintf("/api/show/get/schedule/%s/%s", startDate, endDate)
+	// curDate := date.CurrentDate()
+	now := time.Now()
+
+	// TODO: What even is this? What do we want to get here?
+	// startDate := curDate.Minus(7 + curDate.Weekday())
+	start := now.Add(-time.Duration(7 * now.Weekday()))
+
+	// TODO: What even is this, why 48 days????
+	// endDate := startDate.Plus((7 * 7) - 1)
+	end := start.Add(((7 * 7) - 1) * 24 * time.Hour)
+
+	u := fmt.Sprintf("/api/show/get/schedule/%s/%s",
+		timeutil.String(start),
+		timeutil.String(end))
 
 	var schedule show.Schedule
 	if err := f.get(r.Context(), u, &schedule); err != nil {

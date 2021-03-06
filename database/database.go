@@ -16,7 +16,7 @@ const (
 )
 
 func Open(name string) (*sql.DB, error) {
-	return OpenDriver(MySQL, fmt.Sprintf("rhino:@/%s", name))
+	return OpenDriver(MySQL, fmt.Sprintf("rhino:@/%s?parseTime=true", name))
 }
 
 // OpenDriver opens the database for a given database type.
