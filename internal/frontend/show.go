@@ -228,7 +228,7 @@ func (f *ShowFrontend) addShowRequest(w http.ResponseWriter, r *http.Request) {
 
 // get the given URL and unmarshal data into res. The url specified must be
 // prefixed with a /
-func (f *ShowFrontend) get(ctx context.Context, url string, v interface{}) error {
+func (f *ShowFrontend) get(ctx context.Context, url string, v any) error {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,

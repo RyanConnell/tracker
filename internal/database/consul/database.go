@@ -6,14 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/hashicorp/consul/api"
 
 	"tracker/internal/database"
 )
 
-// UserDatabase implements database.UserDatabase and can be used
-// to insert user data.
+// Database contains methods for getting the data about shows and episodes
 type Database struct {
 	kv KV
 
@@ -39,7 +39,7 @@ func NewDatabase(prefix string, opts ...Option) (*Database, error) {
 }
 
 // get value from the database
-func (db *Database) get(ctx context.Context, key string, value interface{}) error {
+func (db *Database) get(ctx context.Context, key string, value any) error {
 	opt := &api.QueryOptions{}
 	opt = opt.WithContext(ctx)
 
@@ -60,7 +60,7 @@ func (db *Database) get(ctx context.Context, key string, value interface{}) erro
 	return nil
 }
 
-func (db *Database) put(ctx context.Context, key string, value interface{}) error {
+func (db *Database) put(ctx context.Context, key string, value any) error {
 	opt := &api.WriteOptions{}
 	opt = opt.WithContext(ctx)
 
@@ -79,6 +79,27 @@ func (db *Database) put(ctx context.Context, key string, value interface{}) erro
 }
 
 // Option allows to set options for the Consul database.type Option func(*Database)
+func (db *Database) list(ctx context.Context, prefix string) (map[string][]byte, error) {
+	opt := &api.QueryOptions{}
+	opt = opt.WithContext(ctx)
+
+	p := path.Join(db.prefix, prefix)
+
+	kvs, _, err := db.kv.List(p, opt)
+	if err != nil {
+		return nil, fmt.Errorf("unable to list %s: %w", p, err)
+	}
+
+	m := make(map[string][]byte, len(kvs))
+	for _, kv := range kvs {
+		// Remove all the prefixes from the keys.
+		m[strings.TrimPrefix(kv.Key, p+"/")] = kv.Value
+	}
+
+	return m, nil
+}
+
+// Option allows to set options for the Consul database.
 type Option func(*Database)
 
 func KVClient(kv KV) Option {
@@ -91,4 +112,5 @@ func KVClient(kv KV) Option {
 type KV interface {
 	Put(p *api.KVPair, q *api.WriteOptions) (*api.WriteMeta, error)
 	Get(key string, q *api.QueryOptions) (*api.KVPair, *api.QueryMeta, error)
+	List(prefix string, q *api.QueryOptions) (api.KVPairs, *api.QueryMeta, error)
 }

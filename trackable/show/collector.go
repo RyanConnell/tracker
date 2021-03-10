@@ -146,10 +146,11 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate tim
 			// Get release date
 			text := parseString(column.Text())
 			if timeutil.HasMonth(text) {
-				episode.ReleaseDate, err = timeutil.Parse(text)
+				rd, err := timeutil.Parse(text)
 				if err != nil {
 					fmt.Printf("Unable to convert %s to a date object: %v\n", text, err)
 				}
+				episode.ReleaseDate = time.Time(rd)
 				continue
 			}
 
