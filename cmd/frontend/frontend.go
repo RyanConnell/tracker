@@ -3,10 +3,17 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
-	"tracker/server"
-	"tracker/trackable/show"
+	"tracker/internal/frontend"
+	"tracker/internal/server"
+	"tracker/web"
+
+	oldserver "tracker/server"
+
+	"github.com/kelseyhightower/envconfig"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -17,22 +24,51 @@ func main() {
 }
 
 func run() error {
-	apis := map[string]server.WebFrontend{
-		"show": &show.Frontend{},
+	var cfg Config
+	if err := envconfig.Process("frontend", &cfg); err != nil {
+		return fmt.Errorf("unable to process config: %w", err)
 	}
 
-	settings, err := server.NewSettings()
+	var log *zap.Logger
+	if cfg.Debug {
+		log, _ = zap.NewDevelopment()
+	} else {
+		log, _ = zap.NewProduction()
+	}
+
+	// For compatibility reasons, fill in options from the settings
+	settings, err := oldserver.NewSettings()
 	if err != nil {
 		return fmt.Errorf("unable to parse settings: %w", err)
 	}
+	if cfg.Port == 0 {
+		cfg.Port = settings.Port
+	}
+	if cfg.BackendAddr == "" {
+		cfg.BackendAddr = fmt.Sprintf("%s:%d", settings.APIHostname, settings.APIPort)
+	}
 
-	frontend, err := server.NewFrontend(settings, apis)
+	// Initialize the show frontend
+	showFrontend, err := frontend.NewShow(cfg.BackendAddr)
 	if err != nil {
-		return fmt.Errorf("unable to create a new frontend: %w", err)
-	}
-	if err = server.Serve(frontend.Port()); err != nil {
-		return fmt.Errorf("unable to serve on port %d: %w", frontend.Port(), err)
+		return fmt.Errorf("unable to init show frontend: %w", err)
 	}
 
-	return nil
+	s := server.NewServer(map[string]server.Component{
+		"/show":   showFrontend,
+		"/public": frontend.NewStatic(web.Static),
+		"/":       frontend.NewRedirect(http.StatusTemporaryRedirect, "/show/"),
+	},
+		server.Logger(log),
+	)
+
+	return s.Run(cfg.Port)
+}
+
+// Config used for the frontend.
+// TODO: Add default values once we deprecate file settings.
+type Config struct {
+	Debug       bool   `envconfig:"DEBUG"`
+	Port        int    `envconfig:"PORT"`
+	BackendAddr string `split_words:"true"`
 }
