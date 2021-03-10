@@ -31,10 +31,10 @@ type Show struct {
 }
 
 type Episode struct {
-	Title       string
-	Season      int
-	Episode     int
-	ReleaseDate *date.Date
+	Title       string     `json:"title"`
+	Season      int        `json:"season"`
+	Episode     int        `json:"episode"`
+	ReleaseDate *date.Date `json:"release_date"`
 }
 
 func (s *Show) Write() error {
@@ -114,7 +114,6 @@ func (s *Show) String() string {
 
 	return fmt.Sprintf("%-2d - %-30s - %3d Episodes, WikipediaURL='%s'\n%s", s.ID, s.Name,
 		len(s.Episodes), s.WikipediaURL, episodeString)
-
 }
 
 func (s *Episode) String() string {
