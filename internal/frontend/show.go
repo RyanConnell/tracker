@@ -11,14 +11,10 @@ import (
 	"strings"
 	"time"
 
-<<<<<<< HEAD:internal/frontend/show.go
 	"github.com/gorilla/mux"
 
-	"tracker/date"
 	"tracker/internal/httpserver"
-=======
 	"tracker/internal/timeutil"
->>>>>>> 10cd72e... Remove data package:trackable/show/frontend.go
 	"tracker/server/auth"
 	"tracker/trackable/show"
 	"tracker/web"
@@ -161,8 +157,6 @@ type ScheduleRequestData struct {
 }
 
 func (f *ShowFrontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
-	f.Reload()
-
 	// curDate := date.CurrentDate()
 	now := time.Now()
 

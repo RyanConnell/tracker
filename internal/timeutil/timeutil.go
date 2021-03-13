@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+func init() {
+	// precompute all the
+	months = make(map[string]struct{})
+	for m := 1; m <= 12; m++ {
+		months[time.Month(m).String()] = struct{}{}
+	}
+}
+
 const Format = "2006-01-02"
 
 const Day = 24 * time.Hour
@@ -24,12 +32,22 @@ const (
 	ErrInvalidRange = Error("timeutil: invalid time range")
 )
 
+// months contains precomputed map of months so they are quick to access.
+var months map[string]struct{}
+
 // HasMonth checks is there a month in the string, which indicates that the
-// string is possibly a date.
+// string is possibly a date. The month must be a whole word.
 func HasMonth(str string) bool {
-	for m := 1; m <= 12; m++ {
-		fmt.Println("month", time.Month(m))
-		if strings.Contains(strings.ToLower(str), strings.ToLower(time.Month(m).String())) {
+	for _, word := range strings.Fields(str) {
+		word := strings.Map(func(r rune) rune {
+			if strings.ContainsRune(".,:;", r) {
+				return -1
+			} else {
+				return r
+			}
+		}, strings.Title(strings.ToLower(word)))
+
+		if _, exists := months[word]; exists {
 			return true
 		}
 	}

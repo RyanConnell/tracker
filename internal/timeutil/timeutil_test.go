@@ -25,7 +25,7 @@ func TestHasMonth(t *testing.T) {
 		time.November.String():  true,
 		time.December.String():  true,
 		"2st January 2009":      true,
-		"mayday, mayday":        true,
+		"mayday, mayday":        false,
 		"next year":             false,
 		"30th of feb":           false,
 	}
