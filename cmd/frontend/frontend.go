@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"tracker/internal/frontend"
-	"tracker/internal/server"
+	"tracker/internal/httpserver"
 	"tracker/web"
 
 	oldserver "tracker/server"
@@ -62,12 +62,12 @@ func run() error {
 		return fmt.Errorf("unable to init show frontend: %w", err)
 	}
 
-	s := server.NewServer(map[string]server.Component{
+	s := httpserver.NewServer(map[string]httpserver.Component{
 		"/show":   showFrontend,
 		"/public": frontend.NewStatic(web.Static),
 		"/":       frontend.NewRedirect(http.StatusTemporaryRedirect, "/show/"),
 	},
-		server.Logger(log),
+		httpserver.Logger(log),
 	)
 
 	return s.Run(cfg.Port)

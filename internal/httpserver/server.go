@@ -1,4 +1,6 @@
-package server
+// Package httpserver provides an extensible server which is used to serve
+// HTTP traffic.
+package httpserver
 
 import (
 	"fmt"

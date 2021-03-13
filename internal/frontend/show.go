@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"tracker/date"
-	"tracker/internal/server"
+	"tracker/internal/httpserver"
 	"tracker/server/auth"
 	"tracker/trackable/show"
 	"tracker/web"
@@ -89,7 +89,7 @@ func (f *ShowFrontend) listRequest(w http.ResponseWriter, r *http.Request) {
 
 	var showList show.ShowList
 	if err := f.get(r.Context(), u, &showList); err != nil {
-		server.ServeError(err, w)
+		httpserver.ServeError(err, w)
 		return
 	}
 
@@ -107,7 +107,7 @@ func (f *ShowFrontend) listRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("\tTemplate: User=%v\n", user)
 
 	if err = f.templates.ExecuteTemplate(w, "index.html", data); err != nil {
-		server.ServeError(err, w)
+		httpserver.ServeError(err, w)
 	}
 }
 
@@ -126,7 +126,7 @@ func (f *ShowFrontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 
 	var showDetails show.ShowFull
 	if err := f.get(r.Context(), u, &showDetails); err != nil {
-		server.ServeError(err, w)
+		httpserver.ServeError(err, w)
 		return
 	}
 
@@ -144,7 +144,7 @@ func (f *ShowFrontend) detailRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("\tTemplate: User=%v\n", user)
 
 	if err = f.templates.ExecuteTemplate(w, "detail.html", data); err != nil {
-		server.ServeError(err, w)
+		httpserver.ServeError(err, w)
 	}
 }
 
@@ -164,7 +164,7 @@ func (f *ShowFrontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 
 	var schedule show.Schedule
 	if err := f.get(r.Context(), u, &schedule); err != nil {
-		server.ServeError(err, w)
+		httpserver.ServeError(err, w)
 		return
 	}
 
@@ -182,14 +182,14 @@ func (f *ShowFrontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("\tTemplate: User=%v\n", user)
 
 	if err = f.templates.ExecuteTemplate(w, "schedule.html", data); err != nil {
-		server.ServeError(err, w)
+		httpserver.ServeError(err, w)
 	}
 }
 
 func (f *ShowFrontend) loginRequest(w http.ResponseWriter, r *http.Request) {
 	err := f.templates.ExecuteTemplate(w, "login.html", nil)
 	if err != nil {
-		server.ServeError(err, w)
+		httpserver.ServeError(err, w)
 	}
 }
 
@@ -212,7 +212,7 @@ func (f *ShowFrontend) addShowRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = f.templates.ExecuteTemplate(w, "add_show.html", data); err != nil {
-		server.ServeError(err, w)
+		httpserver.ServeError(err, w)
 	}
 }
 
