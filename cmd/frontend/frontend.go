@@ -16,6 +16,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// Config used for the frontend.
+// TODO: Add default values once we deprecate file settings.
+type Config struct {
+	Debug       bool   `envconfig:"DEBUG"`
+	Port        int    `envconfig:"PORT"`
+	BackendAddr string `split_words:"true"`
+}
+
 func main() {
 	if err := run(); err != nil {
 		log.Printf("%+v\n", err)
@@ -63,12 +71,4 @@ func run() error {
 	)
 
 	return s.Run(cfg.Port)
-}
-
-// Config used for the frontend.
-// TODO: Add default values once we deprecate file settings.
-type Config struct {
-	Debug       bool   `envconfig:"DEBUG"`
-	Port        int    `envconfig:"PORT"`
-	BackendAddr string `split_words:"true"`
 }

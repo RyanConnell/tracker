@@ -31,7 +31,7 @@ type ShowFrontend struct {
 // NewFrontend creates a new frontend with default values, which can be
 // overridden using the options. The components allow to extend the
 // frontend with the given paths of the route.
-func NewShow(apiAddr string, opts ...Option) (*ShowFrontend, error) {
+func NewShow(apiAddr string, opts ...ShowOption) (*ShowFrontend, error) {
 	f := &ShowFrontend{
 		apiAddr:    apiAddr,
 		httpClient: http.DefaultClient,
@@ -187,7 +187,6 @@ func (f *ShowFrontend) scheduleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *ShowFrontend) loginRequest(w http.ResponseWriter, r *http.Request) {
-
 	err := f.templates.ExecuteTemplate(w, "login.html", nil)
 	if err != nil {
 		server.ServeError(err, w)
@@ -247,11 +246,11 @@ func (f *ShowFrontend) get(ctx context.Context, url string, v interface{}) error
 	return nil
 }
 
-// Option allows to modify the frontend.
-type Option func(*ShowFrontend) error
+// ShowOption allows to modify the frontend.
+type ShowOption func(*ShowFrontend) error
 
 // HTTPClient allows to override the default client used for requests.
-func HTTPClient(c *http.Client) Option {
+func HTTPClient(c *http.Client) ShowOption {
 	return func(f *ShowFrontend) error {
 		f.httpClient = c
 		return nil
@@ -259,7 +258,7 @@ func HTTPClient(c *http.Client) Option {
 }
 
 // TemplateFS allows to override the fs.FS used for loading templates
-func TemplateFS(tfs fs.FS, pattern string) Option {
+func TemplateFS(tfs fs.FS, pattern string) ShowOption {
 	return func(f *ShowFrontend) (err error) {
 		f.templates, err = template.New("").
 			Funcs(f.funcs).
