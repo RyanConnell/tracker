@@ -12,5 +12,3 @@ func TestImplements(t *testing.T) {
 		t.Errorf("UserDatabase doesn't implement database.UserDatabase")
 	}
 }
-
-// ¯\_(ツ)_/¯
