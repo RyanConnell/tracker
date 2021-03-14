@@ -2,6 +2,7 @@ package consul
 
 import (
 	"context"
+	"sort"
 	"testing"
 	"tracker/internal/types/show"
 
@@ -33,6 +34,8 @@ func TestList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error listing shows: %v", err)
 	}
+
+	sort.Sort(show.ByName(got))
 
 	if diff := deep.Equal(got, want); diff != nil {
 		t.Fatalf("List() = %v, want %v, diff = %v", got, want, diff)
