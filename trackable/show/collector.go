@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
-	"tracker/date"
+	"tracker/internal/timeutil"
 	"tracker/scrape"
 )
 
@@ -64,7 +65,7 @@ func (s *Show) scrapeEpisodes(url string) error {
 	}
 
 	seasonNum := 1
-	var previousDate *date.Date = &date.Date{}
+	var previousDate time.Time
 	tables := scraper.FindAll("table", attr{"class": "wikiepisodetable"})
 	for _, table := range tables {
 		if !table.Valid {
@@ -107,7 +108,7 @@ func (s *Show) parseInfobox(infobox *scrape.Tag) error {
 	return nil
 }
 
-func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *date.Date) error {
+func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate time.Time) error {
 	rows := table.FindAll("tr", nil)
 	for _, row := range rows {
 		if !row.Valid {
@@ -144,8 +145,8 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *da
 
 			// Get release date
 			text := parseString(column.Text())
-			if date.IsDate(text) {
-				episode.ReleaseDate, err = date.ToDate(text)
+			if timeutil.HasMonth(text) {
+				episode.ReleaseDate, err = timeutil.Parse(text)
 				if err != nil {
 					fmt.Printf("Unable to convert %s to a date object: %v\n", text, err)
 				}
@@ -156,7 +157,7 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *da
 
 		// If new date is less than previous date we can skip this episode.
 		// (Indicative of Webisodes)
-		if episode.ReleaseDate.CompareTo(previousDate) == -1 {
+		if episode.ReleaseDate.Before(previousDate) {
 			continue
 		}
 

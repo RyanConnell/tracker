@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"tracker/database"
-	"tracker/date"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -34,7 +33,7 @@ type Episode struct {
 	Title       string
 	Season      int
 	Episode     int
-	ReleaseDate *date.Date
+	ReleaseDate time.Time
 }
 
 func (s *Show) Write() error {
@@ -47,7 +46,7 @@ func (s *Show) Write() error {
 	for _, e := range s.Episodes {
 		_, err = db.Exec(`INSERT INTO episodes(show_id, season, episode, title, release_date)
 		 		          VALUES(?, ?, ?, ?, ?)`, s.ID, e.Season, e.Episode, e.Title,
-			e.ReleaseDate.ToTime())
+			e.ReleaseDate)
 		if err != nil {
 			fmt.Printf("Error with show %d: %v\n", s.ID, err)
 		}
@@ -62,22 +61,22 @@ func (s *Show) GetEpisodes() ([]*Episode, error) {
 
 func (s *Show) GetMostRecentEpisode() *Episode {
 	now := time.Now()
-	currentDate := &date.Date{Day: now.Day(), Month: int(now.Month()), Year: now.Year()}
-	var lastEpisode *Episode = nil
-	for _, episode := range s.Episodes {
-		if episode.ReleaseDate.CompareTo(currentDate) == 1 {
-			return lastEpisode
+
+	var last *Episode
+	for i := len(s.Episodes) - 1; i >= 0; i-- {
+		if s.Episodes[i].ReleaseDate.Before(now) {
+			return s.Episodes[i]
 		}
-		lastEpisode = episode
+		last = s.Episodes[i]
 	}
-	return lastEpisode
+	return last
 }
 
 func (s *Show) GetNextEpisode() *Episode {
 	now := time.Now()
-	currentDate := &date.Date{Day: now.Day(), Month: int(now.Month()), Year: now.Year()}
+
 	for _, episode := range s.Episodes {
-		if episode.ReleaseDate.CompareTo(currentDate) == 1 {
+		if episode.ReleaseDate.After(now) {
 			return episode
 		}
 	}
@@ -93,17 +92,19 @@ func (s *Show) EpisodesBefore(episode *Episode) int {
 	return 0
 }
 
-func (s *Show) EpisodesInRange(startDate, endDate *date.Date) []*Episode {
+func (s *Show) EpisodesInRange(startDate, endDate time.Time) []*Episode {
 	start := sort.Search(len(s.Episodes), func(i int) bool {
-		return s.Episodes[i].ReleaseDate.CompareTo(startDate) == 1
+		return s.Episodes[i].ReleaseDate.After(startDate)
 	})
 	end := sort.Search(len(s.Episodes), func(i int) bool {
-		return s.Episodes[i].ReleaseDate.CompareTo(endDate) == 1
+		return s.Episodes[i].ReleaseDate.Before(endDate)
 	})
-	if start <= end {
-		return s.Episodes[start:end]
+
+	if start > end {
+		return nil
 	}
-	return make([]*Episode, 0)
+
+	return s.Episodes[start:end]
 }
 
 func (s *Show) String() string {
@@ -157,16 +158,11 @@ func (s *Show) Scan(rows *sql.Rows) error {
 }
 
 func (e *Episode) Scan(rows *sql.Rows) error {
-	var date date.NullDate
-	err := rows.Scan(&e.Title, &e.Season, &e.Episode, &date)
+	err := rows.Scan(&e.Title, &e.Season, &e.Episode, &e.ReleaseDate)
 	if err != nil {
 		return fmt.Errorf("Unable to scan episode: %v", err)
 	}
-	if date.Valid {
-		e.ReleaseDate = &date.Date
-	} else {
-		fmt.Printf("Invalid ReleaseDate")
-	}
+
 	return nil
 }
 
