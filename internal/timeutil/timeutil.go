@@ -9,14 +9,6 @@ import (
 	"time"
 )
 
-func init() {
-	// precompute all the
-	months = make(map[string]struct{})
-	for m := 1; m <= 12; m++ {
-		months[time.Month(m).String()] = struct{}{}
-	}
-}
-
 const Format = "2006-01-02"
 
 const Day = 24 * time.Hour
@@ -33,7 +25,20 @@ const (
 )
 
 // months contains precomputed map of months so they are quick to access.
-var months map[string]struct{}
+var months = map[string]struct{}{
+	time.January.String():   {},
+	time.February.String():  {},
+	time.March.String():     {},
+	time.April.String():     {},
+	time.May.String():       {},
+	time.June.String():      {},
+	time.July.String():      {},
+	time.August.String():    {},
+	time.September.String(): {},
+	time.October.String():   {},
+	time.November.String():  {},
+	time.December.String():  {},
+}
 
 // HasMonth checks is there a month in the string, which indicates that the
 // string is possibly a date. The month must be a whole word.
