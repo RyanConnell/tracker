@@ -15,8 +15,13 @@ const (
 	SQLite Driver = "sqlite3"
 )
 
+const (
+	user     = "tracker"
+	hostname = "mysql"
+)
+
 func Open(name string) (*sql.DB, error) {
-	db, err := OpenDriver(MySQL, fmt.Sprintf("tracker:@tcp(mysql:3306)/%s", name))
+	db, err := OpenDriver(MySQL, fmt.Sprintf("%s:@tcp(%s:3306)/%s", user, hostname, name))
 	if err != nil {
 		return nil, err
 	}

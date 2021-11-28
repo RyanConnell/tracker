@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"tracker/database"
@@ -49,7 +50,9 @@ func (s *Show) Write() error {
 		 		          VALUES(?, ?, ?, ?, ?)`, s.ID, e.Season, e.Episode, e.Title,
 			e.ReleaseDate.ToTime())
 		if err != nil {
-			fmt.Printf("Error with show %d: %v\n", s.ID, err)
+			if !strings.Contains(err.Error(), "Duplicate") {
+				fmt.Printf("Error with show %d: %v\n", s.ID, err)
+			}
 		}
 	}
 
@@ -107,13 +110,8 @@ func (s *Show) EpisodesInRange(startDate, endDate *date.Date) []*Episode {
 }
 
 func (s *Show) String() string {
-	episodeString := ""
-	for _, episode := range s.Episodes {
-		episodeString += "\t" + episode.String() + "\n"
-	}
-
-	return fmt.Sprintf("%-2d - %-30s - %3d Episodes, WikipediaURL='%s'\n%s", s.ID, s.Name,
-		len(s.Episodes), s.WikipediaURL, episodeString)
+	return fmt.Sprintf("%-2d - %-30s - %3d Episodes, WikipediaURL='%s'\n", s.ID, s.Name,
+		len(s.Episodes), s.WikipediaURL)
 
 }
 
@@ -128,24 +126,28 @@ func ScrapeAll() error {
 		return err
 	}
 
-	errors := make([]error, 0)
-
+	badShows := make(map[string]error)
 	for _, show := range shows {
 		fmt.Printf("\t%v", show)
 		url := fmt.Sprintf("https://en.wikipedia.org/wiki/%s", show.WikipediaURL)
 		if err = show.scrape(url); err != nil {
-			return err
+			badShows[show.Name] = err
+			fmt.Printf("Error collecting data for %q: %v\n", show.Name, err)
+			continue
 		}
 		err = show.Write()
 		if err != nil {
-			err = fmt.Errorf("Error with show %d; %v", show.ID, err)
-			errors = append(errors, err)
+			badShows[show.Name] = err
+			fmt.Printf("Error writing data for %q: %v\n", show.Name, err)
+			continue
 		}
 	}
 
-	fmt.Printf("%d Error(s) occured\n", len(errors))
-	for _, err := range errors {
-		fmt.Printf("Error: %v\n", err)
+	if len(badShows) != 0 {
+		fmt.Printf("Failed to scrape %d shows:\n", len(badShows))
+		for showName, err := range badShows {
+			fmt.Printf("\t- %q: %v\n", showName, err)
+		}
 	}
 
 	return nil

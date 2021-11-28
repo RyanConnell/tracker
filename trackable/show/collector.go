@@ -25,7 +25,7 @@ func Collect() error {
 func (s *Show) scrape(url string) error {
 	body, err := getBytes(url)
 	if err != nil {
-		return err
+		return fmt.Errorf("getBytes: %v", err)
 	}
 
 	scraper, err := scrape.Create(body)
@@ -37,7 +37,7 @@ func (s *Show) scrape(url string) error {
 	infobox := scraper.FindFirst("table", attr{"class": "infobox"})
 	if infobox.Valid {
 		if err := s.parseInfobox(infobox); err != nil {
-			return err
+			return fmt.Errorf("parseInfobox: %v", err)
 		}
 	}
 
@@ -45,7 +45,7 @@ func (s *Show) scrape(url string) error {
 		s.EpisodeURL = url
 	}
 	if err := s.scrapeEpisodes(s.EpisodeURL); err != nil {
-		return err
+		return fmt.Errorf("scrapeEpisodes: %v", err)
 	}
 
 	fmt.Printf("Show: %+v\n", s)
@@ -74,7 +74,7 @@ func (s *Show) scrapeEpisodes(url string) error {
 		err := s.parseEpisodeTable(table, seasonNum, previousDate)
 		seasonNum++
 		if err != nil {
-			return err
+			return fmt.Errorf("parseEpisodeTable: %v", err)
 		}
 
 	}
