@@ -16,7 +16,15 @@ const (
 )
 
 func Open(name string) (*sql.DB, error) {
-	return OpenDriver(MySQL, fmt.Sprintf("rhino:@/%s", name))
+	db, err := OpenDriver(MySQL, fmt.Sprintf("tracker:@tcp(mysql:3306)/%s", name))
+	if err != nil {
+		return nil, err
+	}
+	_, err = db.Exec(fmt.Sprintf("USE %s", name))
+	if err != nil {
+		return nil, err
+	}
+	return db, err
 }
 
 // OpenDriver opens the database for a given database type.
