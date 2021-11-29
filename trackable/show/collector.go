@@ -109,6 +109,7 @@ func (s *Show) parseInfobox(infobox *scrape.Tag) error {
 
 func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *date.Date) error {
 	rows := table.FindAll("tr", nil)
+	var lastEpisodeNum int
 	for _, row := range rows {
 		if !row.Valid {
 			continue
@@ -122,7 +123,8 @@ func (s *Show) parseEpisodeTable(table *scrape.Tag, season int, previousDate *da
 		episodeNumStr := parseString(columns[0].Text())
 		episodeNum, err := strconv.Atoi(episodeNumStr)
 		if err != nil {
-			return fmt.Errorf("Unable to convert %s to an integer: %v", episodeNumStr, err)
+			lastEpisodeNum++
+			episodeNum = lastEpisodeNum
 		}
 
 		episode := &Episode{
