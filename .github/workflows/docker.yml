@@ -1,0 +1,54 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [develop]
+    tags: [v*]
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  DOCKER_IMAGE_PREFIX: ghcr.io/ryanconnell/tracker
+  DOCKER_PLATFORM: linux/amd64,linux/arm64
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    # Setup
+    - uses: actions/checkout@v3
+    - uses: docker/setup-buildx-action@v2
+    - uses: docker/login-action@v2
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
+
+    # Create tags for different components
+    - uses: crazy-max/ghaction-docker-meta@v1
+      id: docker_meta_frontend
+      with:
+        images: ${{ env.DOCKER_IMAGE_PREFIX}}-frontend
+        tag-sha: true
+    
+    - uses: crazy-max/ghaction-docker-meta@v1
+      id: docker_meta_backend
+      with:
+        images: ${{ env.DOCKER_IMAGE_PREFIX}}-backend
+        tag-sha: true
+
+    - uses: docker/build-push-action@v2
+      with:
+        file: cmd/frontend/Dockerfile
+        platforms: ${{ env.DOCKER_PLATFORM }}
+        push: true
+        tags: ${{ steps.docker_meta_frontend.outputs.tags }}
+        labels: ${{ steps.docker_meta_frontend.outputs.labels }}
+
+    - name: Build and Push Backend
+      uses: docker/build-push-action@v2
+      with:
+        file: cmd/frontend/Dockerfile
+        platforms: ${{ env.DOCKER_PLATFORM }}
+        push: true
+        tags: ${{ steps.docker_meta_backend.outputs.tags }}
+        labels: ${{ steps.docker_meta_backend.outputs.labels }}
