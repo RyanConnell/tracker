@@ -84,7 +84,7 @@ func Parse(str string) (t time.Time, err error) {
 		return t, ErrInvalidTime
 	}
 
-	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local), nil
+	return time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC), nil
 }
 
 // monthNumber returns the number of the month

@@ -61,7 +61,7 @@ func TestMonthNumber(t *testing.T) {
 
 func TestString(t *testing.T) {
 	testCases := map[time.Time]string{
-		time.Date(2021, time.March, 6, 0, 0, 0, 0, time.Local): "2021-03-06",
+		time.Date(2021, time.March, 6, 0, 0, 0, 0, time.UTC): "2021-03-06",
 	}
 
 	for in, want := range testCases {
@@ -77,7 +77,7 @@ func TestJSONTime_UnmarshalJSON(t *testing.T) {
 		err  error
 	}{
 		`"2021-03-06"`: {
-			time.Date(2021, time.March, 6, 0, 0, 0, 0, time.Local),
+			time.Date(2021, time.March, 6, 0, 0, 0, 0, time.UTC),
 			nil,
 		},
 	}
@@ -104,7 +104,7 @@ func TestJSONTime_UnmarshalJSON(t *testing.T) {
 
 func TestJSONTime_MarshalJSON(t *testing.T) {
 	testCases := map[time.Time]string{
-		time.Date(2021, time.March, 6, 0, 0, 0, 0, time.Local): `"2021-03-06"`,
+		time.Date(2021, time.March, 6, 0, 0, 0, 0, time.UTC): `"2021-03-06"`,
 	}
 
 	for in, want := range testCases {
