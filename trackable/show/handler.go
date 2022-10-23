@@ -2,8 +2,9 @@ package show
 
 import (
 	"fmt"
+	"time"
 
-	"tracker/date"
+	"tracker/internal/timeutil"
 )
 
 // Handler will take care of database loading and API prepping for Shows.
@@ -44,14 +45,14 @@ type ShowFull struct {
 }
 
 type Schedule struct {
-	StartDate date.Date      `json:"start_date"`
-	EndDate   date.Date      `json:"end_date"`
-	Items     []ScheduleItem `json:"items"`
+	StartDate timeutil.JSONTime `json:"start_date"`
+	EndDate   timeutil.JSONTime `json:"end_date"`
+	Items     []ScheduleItem    `json:"items"`
 }
 
 type ScheduleItem struct {
-	Date     *date.Date       `json:"date"`
-	Episodes []*CalendarEntry `json:"episodes"`
+	Date     timeutil.JSONTime `json:"date"`
+	Episodes []*CalendarEntry  `json:"episodes"`
 }
 
 var listFilters = map[string]func(*Show) bool{
@@ -91,20 +92,22 @@ func (h *Handler) GetList(listType string) (*ShowList, error) {
 }
 
 func (h *Handler) GetSchedule(start, end string) (*Schedule, error) {
-	startDate, err := date.DateFromStr(start)
+	// startDate, err := date.DateFromStr(start)
+	startDate, err := time.Parse(timeutil.Format, start)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to parse start: %w", err)
 	}
 
-	endDate, err := date.DateFromStr(end)
+	// endDate, err := date.DateFromStr(end)
+	endDate, err := time.Parse(timeutil.Format, end)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to parse end: %w", err)
 	}
 
 	schedule := &Schedule{}
-	schedule.StartDate = startDate
-	schedule.EndDate = endDate
-	dateRange, err := date.DatesInRange(startDate, endDate)
+	schedule.StartDate = timeutil.JSONTime(startDate)
+	schedule.EndDate = timeutil.JSONTime(endDate)
+	dateRange, err := timeutil.DaysBetween(startDate, endDate)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create Date range: %v", err)
 	}
@@ -113,8 +116,8 @@ func (h *Handler) GetSchedule(start, end string) (*Schedule, error) {
 	episodeMap := h.episodesInRange(dateRange)
 	for i, date := range dateRange {
 		item := ScheduleItem{
-			Date:     date,
-			Episodes: episodeMap[*date],
+			Date:     timeutil.JSONTime(date),
+			Episodes: episodeMap[date],
 		}
 		days[i] = item
 	}
@@ -130,19 +133,19 @@ type CalendarEntry struct {
 	*Episode
 }
 
-func (h *Handler) episodesInRange(dateRange []*date.Date) map[date.Date][]*CalendarEntry {
-	episodeMap := map[date.Date][]*CalendarEntry{}
+func (h *Handler) episodesInRange(dateRange []time.Time) map[time.Time][]*CalendarEntry {
+	episodeMap := map[time.Time][]*CalendarEntry{}
 	if len(dateRange) == 0 {
 		return episodeMap
 	}
 	for _, date := range dateRange {
-		episodeMap[*date] = make([]*CalendarEntry, 0)
+		episodeMap[date] = make([]*CalendarEntry, 0)
 	}
 	for _, show := range h.shows {
 		eps := show.EpisodesInRange(dateRange[0], dateRange[len(dateRange)-1])
 		for _, e := range eps {
 			entry := &CalendarEntry{show.ID, show.Name, e}
-			episodeMap[*e.ReleaseDate] = append(episodeMap[*e.ReleaseDate], entry)
+			episodeMap[e.ReleaseDate] = append(episodeMap[e.ReleaseDate], entry)
 		}
 	}
 	return episodeMap
@@ -164,9 +167,10 @@ func listFilterAll(show *Show) bool {
 
 // listFilterAiring will return true for all shows that have aired in the last 30 days.
 func listFilterAiring(show *Show) bool {
-	lastMonth := date.CurrentDate().Minus(30)
+	// lastMonth := date.CurrentDate().Minus(30)
+	lastMonth := time.Now().Add(-30 * timeutil.Day)
 	if mostRecentEpisode := show.GetMostRecentEpisode(); mostRecentEpisode != nil {
-		return mostRecentEpisode.ReleaseDate.CompareTo(lastMonth) == 1
+		return mostRecentEpisode.ReleaseDate.After(lastMonth)
 	}
 	return false
 }
