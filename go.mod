@@ -9,7 +9,6 @@ require (
 	github.com/gorilla/sessions v1.2.1
 	github.com/hashicorp/consul/api v1.14.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/mattn/go-sqlite3 v1.14.15
 	go.uber.org/zap v1.23.0
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1

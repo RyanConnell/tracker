@@ -5,14 +5,12 @@ import (
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type Driver string
 
 const (
 	MySQL  Driver = "mysql"
-	SQLite Driver = "sqlite3"
 )
 
 func Open(name string) (*sql.DB, error) {
