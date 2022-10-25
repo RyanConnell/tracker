@@ -9,13 +9,10 @@ import (
 	"tracker/internal/types/user"
 
 	"github.com/go-test/deep"
-	"github.com/hashicorp/consul/api"
 )
 
-var errNotFound = errors.New("kv: not found")
-
 func TestImplements(t *testing.T) {
-	var i interface{} = &UsersDatabase{}
+	var i any = &UsersDatabase{}
 
 	if _, ok := i.(database.UsersDatabase); !ok {
 		t.Errorf("UserDatabase does not implement database.UserDatabase")
@@ -54,22 +51,5 @@ func TestE2E(t *testing.T) {
 
 	if diff := deep.Equal(got, want); diff != nil {
 		t.Fatalf("Get() = %v, got %v, diff = %v", got, want, diff)
-	}
-}
-
-type testKV struct {
-	m map[string][]byte
-}
-
-func (kv *testKV) Put(pair *api.KVPair, _ *api.WriteOptions) (*api.WriteMeta, error) {
-	kv.m[pair.Key] = pair.Value
-	return nil, nil
-}
-
-func (kv *testKV) Get(key string, _ *api.QueryOptions) (*api.KVPair, *api.QueryMeta, error) {
-	if v, exists := kv.m[key]; exists {
-		return &api.KVPair{Key: key, Value: v}, nil, nil
-	} else {
-		return nil, nil, errNotFound
 	}
 }

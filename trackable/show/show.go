@@ -2,11 +2,13 @@ package show
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
 
 	"tracker/database"
+	"tracker/internal/timeutil"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -34,6 +36,42 @@ type Episode struct {
 	Season      int
 	Episode     int
 	ReleaseDate time.Time
+}
+
+type episodeJSON struct {
+	Title           string            `json:"title"`
+	Season          int               `json:"season"`
+	Episode         int               `json:"episode"`
+	ReleaseDateJSON timeutil.JSONTime `json:"release_date"`
+}
+
+// MarshalJSON add the proper JSON encoding to the release_date
+func (e *Episode) MarshalJSON() ([]byte, error) {
+	ej := episodeJSON{
+		Title:           e.Title,
+		Season:          e.Season,
+		Episode:         e.Episode,
+		ReleaseDateJSON: timeutil.JSONTime(e.ReleaseDate),
+	}
+
+	return json.Marshal(ej)
+}
+
+// UnmarshalJSON converts back to episode with release_date correctly parsed.
+func (e *Episode) UnmarshalJSON(b []byte) error {
+	ej := new(episodeJSON)
+	if err := json.Unmarshal(b, ej); err != nil {
+		return err
+	}
+
+	*e = Episode{
+		Title:       ej.Title,
+		Season:      ej.Season,
+		Episode:     ej.Episode,
+		ReleaseDate: time.Time(ej.ReleaseDateJSON),
+	}
+
+	return nil
 }
 
 func (s *Show) Write() error {
@@ -115,7 +153,6 @@ func (s *Show) String() string {
 
 	return fmt.Sprintf("%-2d - %-30s - %3d Episodes, WikipediaURL='%s'\n%s", s.ID, s.Name,
 		len(s.Episodes), s.WikipediaURL, episodeString)
-
 }
 
 func (s *Episode) String() string {

@@ -39,10 +39,10 @@ func (db *UsersDatabase) Details(ctx context.Context, email string) (*user.User,
 	return &u, nil
 }
 
-func (db *UsersDatabase) get(ctx context.Context, key string, value interface{}) error {
+func (db *UsersDatabase) get(ctx context.Context, key string, value any) error {
 	return db.db.get(ctx, path.Join(db.prefix, key), value)
 }
 
-func (db *UsersDatabase) put(ctx context.Context, key string, value interface{}) error {
+func (db *UsersDatabase) put(ctx context.Context, key string, value any) error {
 	return db.db.put(ctx, path.Join(db.prefix, key), value)
 }
